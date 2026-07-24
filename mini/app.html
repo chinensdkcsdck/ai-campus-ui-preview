@@ -498,7 +498,7 @@ const flows = [
   { title: '7. 闲置私信', desc: '商品详情 → 会话', run: () => openGoods('g1') },
   { title: '8. 活动推广', desc: '活动详情含推广标', run: () => openActivity('a1') },
   { title: '9. 学习资料买家', desc: '资料商店 → 下单支付 → 已购交付', run: () => { state.digitalBuyerTab='shop'; go('digital', true); } },
-  { title: '10. 认证卖家', desc: '申请 → 上架 → 结算', run: () => go('seller-apply', true) },
+  { title: '10. 资料发布者', desc: '开通售卖 → 上架 → 结算', run: () => go('seller-apply', true) },
   { title: '11. 搜索 / 组织 / 推广', desc: '搜索、组织身份、推广账户', run: () => go('search', true) },
 ];
 
@@ -561,7 +561,7 @@ function openPublishSheet(){
     <div class="sheet-item" data-go="compose">发广场动态</div>
     <div class="sheet-item" data-go="lost-publish">发布失物招领</div>
     <div class="sheet-item" data-go="used-publish">发布个人闲置</div>
-    <div class="sheet-item" data-go="digital-publish">发布学习资料（需认证卖家）</div>
+    <div class="sheet-item" data-go="digital-publish">发布学习资料（需开通售卖）</div>
     <div class="sheet-item" data-go="activity-publish">发布活动（需组织身份）</div>
     <div class="sheet-item" data-go="search">搜索校园内容</div>
     <div class="sheet-item" style="border:0;color:#888;text-align:center" data-close>取消</div>
@@ -1299,7 +1299,7 @@ function pageMarket(){
         <span class="chip ${sort==='hot'?'':'gray'}" data-msort="hot" style="cursor:pointer">热度</span>
         <span class="chip gray" id="toDigital2" style="cursor:pointer">学习资料</span>
       </div>
-      <div class="banner" style="margin-top:10px">笔记 / 题集 / 复习资料请点「学习资料」；闲置仅信息撮合、不经手资金。</div>
+      <div class="banner" style="margin-top:10px">反诈：闲置只撮合信息，平台不经手资金、不担保成色与身份。务必当面验货，切勿提前转账或扫码付款。笔记题集请走「学习资料」。</div>
     </div>
     <div class="stack" style="padding:0 14px 18px">
       ${show.map(g=>`
@@ -1331,7 +1331,7 @@ function pageGoods(){
       <div class="row space"><h2 style="margin:0;font-size:22px" class="price">¥${g.price}</h2><span class="chip gray">${g.degree}</span></div>
       <b style="font-size:16px">${g.title}</b>
       <div class="muted" style="font-size:12px">${g.campus} · 建议当面交易</div>
-      <div class="banner">平台不担保用户身份和商品质量。普通用户身份未核验，请当面验货，谨慎提前转账。</div>
+      <div class="banner">反诈提醒：平台只做信息展示，不担保身份、真假与成色。请校园内当面验货再付款；拒绝先转账、先扫码、先加微信；遇「已卖出请转定金」类话术立即停止。交易风险自负。</div>
       <div class="card pad row space">
         <div class="row"><div class="avatar">${g.seller[0]}</div><div><b>${g.seller}</b><div class="muted" style="font-size:11px">${g.trust}</div></div></div>
         <span class="chip gray">可信度提示</span>
@@ -1414,7 +1414,7 @@ function pageDigital(){
         <span class="chip ${sort==='price_asc'?'':'gray'}" data-sort="price_asc" style="cursor:pointer">价格↑</span>
         <span class="chip ${sort==='price_desc'?'':'gray'}" data-sort="price_desc" style="cursor:pointer">价格↓</span>
       </div>
-      <div class="banner" style="margin:10px 0 0">学习资料：原创笔记 / 解析 / 题集 · 支付后自动交付 · 可退款与投诉</div>
+      <div class="banner" style="margin:10px 0 0">风险说明：学习资料由发布者上传，平台不做质量/权利/效果担保。付款前请看样张；勿买未公开试题或「包过」服务。纠纷由买卖双方自行协商，出问题不找平台背锅。</div>
     </div>
     <div class="stack" style="padding:0 14px 18px">
       ${list.map(d => `
@@ -1460,8 +1460,8 @@ function pageDigitalDetail(){
         <div><b>适用课程</b>　${d.course} · ${d.year || '—'} · ${d.major || '全校'}</div>
         <div><b>版本信息</b>　${d.version || '—'} · ${d.fileType || 'PDF'} · ${d.pages || '—'} 页 · ${d.size || '—'}</div>
         <div><b>更新时间</b>　${d.updatedAt || '—'} ${d.updates ? '· 含后续更新' : ''}</div>
-        <div><b>认证卖家</b>　${d.seller}</div>
-        <div class="muted">平台已完成卖家认证（业务权限），不等于学籍认证</div>
+        <div><b>发布者</b>　${d.seller}</div>
+        <div class="muted">「开通售卖」仅表示可上架资料，不是平台认证、不是学籍核验，也不担保内容真实与权利归属。</div>
       </div>
       <div class="card pad">
         <b>脱敏预览 / 样张</b>
@@ -1469,14 +1469,16 @@ function pageDigitalDetail(){
         <div class="muted" style="font-size:11px;margin-top:8px">完整文件支付后交付，无永久公开链接</div>
       </div>
       <div class="card pad">
-        <b>购买须知</b>
+        <b>购买须知 · 风险自担</b>
         <div class="muted" style="margin-top:8px;font-size:12px;line-height:1.6">
-          权利来源：${d.rights || '卖家声明'}<br/>
-          退款：${d.refund || '付款前请阅读规则'}<br/>
-          交付：支付成功后自动开放在线查看 / 限次下载<br/>
-          禁止：未公开试题、盗版、代写代考、作弊服务
+          权利来源由发布者自述：${d.rights || '发布者声明'}，平台未实质核验其合法性。<br/>
+          退款：${d.refund || '付款前请阅读规则'}；已下载/已查看后争议由双方协商。<br/>
+          交付：支付成功后技术自动放权，不代表平台对内容背书。<br/>
+          禁止：未公开试题、盗版、代写代考、作弊/包过服务。<br/>
+          你确认：自愿购买，风险与损失由本人承担，不向平台主张质量/效果/权利担保责任。
         </div>
       </div>
+      <div class="banner">反诈：只在站内付款；警惕导流到微信/QQ 私下转账；样张与成品质不符先停手；承诺考试包过的一律别信。</div>
       ${owned
         ? `<button class="btn block" onclick="go('digital-owned')">已购买 · 进入已购内容</button>`
         : `<button class="btn block" id="buyDigital">立即购买</button>`}
@@ -1498,7 +1500,7 @@ function pageDigitalCheckout(){
   const sellerGet = Math.round((d.price - fee) * 100) / 100;
   $('content').innerHTML = `
     <div class="pad stack">
-      <div class="banner">支付前请确认价格、交付方式与退款说明。支付成功只处理一次有效回调（演示）。</div>
+      <div class="banner">付款即表示你已知晓：平台不担保资料质量、权利归属与学习效果；风险由你本人承担。勿相信任何「平台认证保真」说法。</div>
       <div class="card pad">
         <b>${d.title}</b>
         <div class="muted" style="font-size:12px;margin-top:6px">${d.course} · ${d.version || 'v1'} · ${d.seller}</div>
@@ -1506,20 +1508,24 @@ function pageDigitalCheckout(){
       </div>
       <div class="card pad stack" style="gap:8px;font-size:13px">
         <div class="row space"><span>商品金额</span><b>¥${d.price}</b></div>
-        <div class="row space"><span>平台服务费（展示）</span><span class="muted">¥${fee}（${Math.round(rate*100)}%）</span></div>
-        <div class="row space"><span>卖家待结算（示意）</span><span class="muted">¥${sellerGet}</span></div>
-        <div class="row space"><span>交付方式</span><b>自动交付</b></div>
+        <div class="row space"><span>技术服务费（展示）</span><span class="muted">¥${fee}（${Math.round(rate*100)}%）</span></div>
+        <div class="row space"><span>发布者待结算（示意）</span><span class="muted">¥${sellerGet}</span></div>
+        <div class="row space"><span>交付方式</span><b>自动放权</b></div>
       </div>
       <div class="card pad">
-        <b>退款与合规</b>
-        <div class="muted" style="margin-top:8px;font-size:12px;line-height:1.55">${d.refund || '未下载可申请退款'}。已交付内容按规则处理，不使用笼统的「一经售出概不退款」替代说明。</div>
+        <b>退款 · 反诈 · 责任说明</b>
+        <div class="muted" style="margin-top:8px;font-size:12px;line-height:1.55">
+          ${d.refund || '未下载可申请退款'}。内容是否有用、是否侵权，由发布者负责，平台不作背书。<br/>
+          反诈：只在本页完成支付；拒绝站外转账；警惕诱导重复付款。<br/>
+          责任：你自愿购买并自担风险，因内容纠纷造成的损失不向平台追偿。
+        </div>
       </div>
-      <label class="row" style="font-size:12px;gap:8px"><input type="checkbox" id="payAgree" checked style="width:auto" /> 已阅读交付与退款说明</label>
+      <label class="row" style="font-size:12px;gap:8px;align-items:flex-start"><input type="checkbox" id="payAgree" checked style="width:auto;margin-top:3px" /> 我已阅读风险说明，确认自行判断并自担责任，不向平台主张担保责任</label>
       <button class="btn block" id="doPay">确认支付 ¥${d.price}</button>
       <button class="btn ghost block" onclick="back()">返回修改</button>
     </div>`;
   $('doPay').onclick = () => {
-    if (!$('payAgree').checked) { toast('请先确认须知'); return; }
+    if (!$('payAgree').checked) { toast('请先勾选风险与责任说明'); return; }
     const order = {
       id: 'o_' + Date.now(), goodsId: d.id, title: d.title, price: d.price,
       status: '已交付', time: '刚刚', version: d.version || 'v1', role: 'buyer',
@@ -1546,9 +1552,9 @@ function pageDigitalPaySuccess(){
       <div class="muted" style="font-size:13px;line-height:1.6">${o ? o.title : '学习资料'}<br/>版本 ${o ? (o.version||'') : ''} · 订单 ${o ? o.id : ''}</div>
       <div class="card pad" style="text-align:left;margin-top:8px">
         <div class="muted" style="font-size:12px;line-height:1.6">
-          · 已生成可审计交付记录<br/>
-          · 支持在线查看（含水印）与短时下载链接<br/>
-          · 原文件无永久公开地址
+          · 已完成技术交付（在线查看 / 短时下载）<br/>
+          · 内容质量与权利由发布者负责，平台不背书<br/>
+          · 如有争议请先联系发布者；投诉通道仅作违规处置，不等于平台理赔
         </div>
       </div>
       <button class="btn block" onclick="go('digital-owned')">查看已购内容</button>
@@ -1562,7 +1568,7 @@ function pageDigitalOwned(){
   $('tabbar').style.display = 'none';
   $('content').innerHTML = `
     <div class="pad stack">
-      <div class="banner">买家图书馆：在线查看 / 限次下载 / 版本更新 / 退款与侵权投诉。</div>
+      <div class="banner">已购内容由发布者提供。平台只保留访问权限与基础售后入口；质量/侵权/效果争议由你与发布者协商，风险自担。</div>
       ${orders.length ? orders.map(o => `
         <div class="card pad">
           <div class="row space">
@@ -1613,16 +1619,16 @@ function pageDigitalOwned(){
 }
 
 function pageSellerApply(){
-  navBar('认证卖家申请', { back: true });
+  navBar('开通学习资料售卖', { back: true });
   $('tabbar').style.display = 'none';
   const st = (M.seller && M.seller.status) || 'none';
   if (st === 'approved') {
-    $('content').innerHTML = `<div class="pad stack"><div class="banner">你已是认证卖家</div><button class="btn block" onclick="go('seller-center')">进入卖家中心</button></div>`;
+    $('content').innerHTML = `<div class="pad stack"><div class="banner">你已开通售卖权限（非平台质量认证）</div><button class="btn block" onclick="go('seller-center')">进入发布中心</button></div>`;
     return;
   }
   if (st === 'pending') {
     $('content').innerHTML = `<div class="pad stack">
-      <div class="banner">申请审核中。通过前不可发布数字商品。</div>
+      <div class="banner">申请处理中。通过前不可上架学习资料。开通权限≠平台为你背书。</div>
       <button class="btn block" id="mockPass">演示：模拟审核通过</button>
     </div>`;
     $('mockPass').onclick = () => { M.seller.status = 'approved'; toast('审核通过'); go('seller-center'); };
@@ -1630,14 +1636,14 @@ function pageSellerApply(){
   }
   $('content').innerHTML = `
     <div class="pad stack">
-      <div class="banner">登录用户可申请认证卖家。需提交联系人、销售内容、收款结算信息，并同意数字商品 / 知识产权 / 退款规则。</div>
+      <div class="banner">开通售卖仅用于发布权限与结算信息登记，不构成平台对你或资料的认证、担保。权利与内容责任由你本人承担；若侵权/欺诈，平台可下架并配合处理，但不代你担责。</div>
       <label class="muted" style="font-size:12px">联系人</label>
       <input class="input" id="sContact" value="${M.me.name}" />
       <label class="muted" style="font-size:12px">销售内容说明</label>
       <textarea id="sContent">原创复习笔记、课程解析与自制题集（有权处分）</textarea>
       <label class="muted" style="font-size:12px">收款与结算信息</label>
       <input class="input" id="sPay" value="微信商户（演示）" />
-      <label class="row" style="font-size:12px;gap:8px"><input type="checkbox" id="sAgree" checked style="width:auto" /> 同意数字商品、知识产权与退款规则</label>
+      <label class="row" style="font-size:12px;gap:8px"><input type="checkbox" id="sAgree" checked style="width:auto" /> 同意：资料权利自担、禁止盗版与未公开试题、交易纠纷自行处理、平台不提供质量担保</label>
       <div class="card pad" style="font-size:12px;line-height:1.55"><b>禁止销售</b><div class="muted" style="margin-top:6px">未公开试题、盗版资料、代写代考、作弊服务、含隐私内容等。</div></div>
       <button class="btn block" id="sSubmit">提交申请</button>
     </div>`;
@@ -1653,7 +1659,7 @@ function pageSellerApply(){
   };
 }
 function pageSellerCenter(){
-  navBar('卖家中心', { back: true });
+  navBar('发布中心', { back: true });
   $('tabbar').style.display = 'none';
   if (!M.seller || M.seller.status !== 'approved') { go('seller-apply'); return; }
   const tab = state.sellerTab || 'goods';
@@ -1681,7 +1687,7 @@ function pageSellerCenter(){
     body = `<div class="stack">
       <div class="card pad"><div class="muted" style="font-size:12px">待结算</div><b style="font-size:24px">¥${M.seller.pendingSettle || 0}</b><div class="muted" style="font-size:11px;margin-top:6px">观察期后可结算；退款将冲回</div></div>
       <div class="card pad"><div class="muted" style="font-size:12px">已结算</div><b style="font-size:24px">¥${M.seller.settled || 0}</b></div>
-      <div class="card pad" style="font-size:13px;line-height:1.55">平台服务费 <b>${feePct}%</b> · 累计销售 ${M.seller.salesCount || 0} 单<br/><span class="muted">上架前已展示抽成与结算规则（演示）</span></div>
+      <div class="card pad" style="font-size:13px;line-height:1.55">技术服务费 <b>${feePct}%</b> · 累计销售 ${M.seller.salesCount || 0} 单<br/><span class="muted">上架前已展示抽成与结算规则（演示）</span></div>
       <button class="btn ghost block" onclick="toast('演示：已发起结算申请')">申请结算</button>
     </div>`;
   }
@@ -1689,8 +1695,8 @@ function pageSellerCenter(){
     <div class="pad stack">
       <div class="card pad row" style="gap:10px">
         <div class="avatar">卖</div>
-        <div class="grow"><b>认证卖家 · ${M.me.name}</b><div class="muted" style="font-size:12px;margin-top:4px">${M.seller.content || '数字商品销售'}</div></div>
-        <span class="chip">已认证</span>
+        <div class="grow"><b>发布者 · ${M.me.name}</b><div class="muted" style="font-size:12px;margin-top:4px">${M.seller.content || '学习资料售卖'} · 权限开通，非平台认证</div></div>
+        <span class="chip gray">已开通</span>
       </div>
       <div class="row" style="gap:8px">
         <button class="btn ${tab==='goods'?'':'ghost'} sm" data-st="goods">商品</button>
@@ -1707,13 +1713,13 @@ function pageDigitalPublish(){
   navBar('上架学习资料', { back: true });
   $('tabbar').style.display = 'none';
   if (!M.seller || M.seller.status !== 'approved') {
-    $('content').innerHTML = `<div class="pad stack"><div class="banner">未经认证卖家审核，不得发布数字商品。</div><button class="btn block" onclick="go('seller-apply')">去申请认证卖家</button></div>`;
+    $('content').innerHTML = `<div class="pad stack"><div class="banner">需先开通售卖权限。开通不等于平台认证你的资料。</div><button class="btn block" onclick="go('seller-apply')">去开通售卖</button></div>`;
     return;
   }
   const feePct = Math.round(((M.seller.feeRate || 0.1) * 100));
   $('content').innerHTML = `
     <div class="pad stack">
-      <div class="banner">需填写预览、价格、授权说明与适用范围；通过内容与权利审核后上架。</div>
+      <div class="banner">上架前须自证权利来源。平台审核仅为风险拦截（如明显违规），不构成对内容真实性/合法性的背书；侵权与误导责任由你承担。</div>
       <input class="input" id="dgTitle" placeholder="标题" value="线性代数考点速记" />
       <input class="input" id="dgCourse" placeholder="适用课程" value="线性代数" />
       <input class="input" id="dgYear" placeholder="适用年份" value="2025-2026" />
@@ -1721,7 +1727,7 @@ function pageDigitalPublish(){
       <textarea id="dgPreview">本人整理考点卡片，附 2 页样张；非未公开试题。</textarea>
       <textarea id="dgRights">原创整理，卖家拥有处分权</textarea>
       <label class="row" style="font-size:12px;gap:8px"><input type="checkbox" id="dgRule" checked style="width:auto" /> 确认不含盗版 / 未公开试题 / 作弊服务</label>
-      <div class="muted" style="font-size:11px">平台服务费 ${feePct}% ，上架前已展示</div>
+      <div class="muted" style="font-size:11px">技术服务费 ${feePct}%（工具费，非质保金）</div>
       <button class="btn block" id="dgSubmit">提交审核</button>
     </div>`;
   $('dgSubmit').onclick = () => {
@@ -1730,7 +1736,7 @@ function pageDigitalPublish(){
       id: 'd_' + Date.now(), title: $('dgTitle').value || '未命名资料',
       price: parseFloat($('dgPrice').value || '0') || 0,
       course: $('dgCourse').value || '—', year: $('dgYear').value || '—', sales: 0,
-      seller: '认证卖家 · ' + M.me.name, sellerId: 'u_me',
+      seller: '发布者 · ' + M.me.name, sellerId: 'u_me',
       preview: $('dgPreview').value, version: 'v1', pages: 10, size: '1.0 MB',
       rights: $('dgRights').value, refund: '未下载可申请退款',
       status: '审核中', updates: true, campus: M.me.campus
@@ -1778,7 +1784,7 @@ function pageChat(){
   $('tabbar').style.display='none';
   $('content').innerHTML = `
     <div class="pad stack">
-      <div class="banner">私信仅限本校实例。不展示真实手机号。</div>
+      <div class="banner">反诈：私信仅限本校。勿引导站外转账/扫码；勿泄露验证码与支付密码。平台不担保交易结果，风险自担。</div>
       ${c.source ? `<div class="card pad" style="background:var(--soft)"><span class="chip">会话来源</span><div style="margin-top:6px;font-size:13px">${c.source}</div></div>` : ''}
       ${c.request ? `<div class="card pad"><b>陌生人消息请求</b><div class="muted" style="font-size:12px;margin-top:6px">对方想咨询，是否接受？</div>
         <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
@@ -1805,7 +1811,7 @@ function pageChat(){
 function pageMe(){
   navBar('我的');
   const sellerStatus = (M.seller && M.seller.status) || 'none';
-  const sellerLabel = sellerStatus === 'approved' ? '卖家中心' : (sellerStatus === 'pending' ? '认证审核中' : '申请认证卖家');
+  const sellerLabel = sellerStatus === 'approved' ? '资料发布中心' : (sellerStatus === 'pending' ? '售卖开通审核中' : '开通学习资料售卖');
   const sellerGo = sellerStatus === 'approved' ? 'seller-center' : 'seller-apply';
   const orgLabel = M.me.orgStatus === 'approved' ? ('组织 · ' + (M.me.orgName||'已认证')) : (M.me.orgStatus === 'pending' ? '组织审核中' : '申请组织身份');
   $('content').innerHTML = `
@@ -1817,7 +1823,7 @@ function pageMe(){
           <div class="muted" style="font-size:12px;margin-top:4px">${M.me.major}</div>
           <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">
             <span class="chip">${M.me.campus}</span>
-            ${sellerStatus==='approved'?'<span class="chip">认证卖家</span>':''}
+            ${sellerStatus==='approved'?'<span class="chip gray">已开通售卖·非平台认证</span>':''}
             ${M.me.orgStatus==='approved'?'<span class="chip orange">组织负责人</span>':''}
           </div>
         </div>
@@ -1890,7 +1896,7 @@ function pageReport(){
   $('content').innerHTML = `<div class="pad stack">
     <div class="banner">可举报帖子、评论、商品、私信和 AI 回答。紧急人身安全请联系保卫处/公共紧急电话。</div>
     <label class="muted" style="font-size:12px">类型</label>
-    <select><option>帖子</option><option>评论</option><option>闲置商品</option><option>数字商品</option><option>私信</option><option>活动</option><option>AI 回答</option></select>
+    <select><option>帖子</option><option>评论</option><option>闲置商品</option><option>学习资料</option><option>私信</option><option>活动</option><option>AI 回答</option></select>
     <label class="muted" style="font-size:12px">原因</label>
     <select><option>人身攻击</option><option>隐私泄露</option><option>虚假交易</option><option>盗版/未公开试题</option><option>骚扰广告</option><option>其他</option></select>
     <textarea placeholder="补充说明（可选）"></textarea>
@@ -1954,7 +1960,7 @@ function pageUsedPublish(){
   $('tabbar').style.display='none';
   const draft = state.usedDraft || {};
   $('content').innerHTML = `<div class="pad stack">
-    <div class="banner">个人闲置仅信息撮合，不经手资金。请当面验货，谨慎提前转账。</div>
+    <div class="banner">反诈：闲置只撮合、不经手资金。请当面验货再付款；禁止要求对方先转定金/先扫码。发布虚假信息将被处理，交易风险由双方自担。</div>
     <input class="input" id="ut" placeholder="标题" value="${draft.title||'线性代数教材'}" />
     <input class="input" id="up" placeholder="价格" value="15" />
     <select id="uc"><option>教材</option><option>数码</option><option>日用</option><option>其他</option></select>

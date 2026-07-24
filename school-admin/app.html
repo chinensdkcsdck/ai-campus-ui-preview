@@ -22,8 +22,8 @@
     <button class="nav-item" data-page="queue">待整理求助</button>
     <button class="nav-item" data-page="knowledge">候选知识审核</button>
     <button class="nav-item" data-page="moderation">内容与举报</button>
-    <button class="nav-item" data-page="digital">数字商品审核</button>
-    <button class="nav-item" data-page="sellers">认证卖家审核</button>
+    <button class="nav-item" data-page="digital">学习资料审核</button>
+    <button class="nav-item" data-page="sellers">售卖权限审核</button>
     <button class="nav-item" data-page="acts">活动审核</button>
     <div class="nav-group">本校配置</div>
     <button class="nav-item" data-page="campus">校区内容共享</button>
@@ -57,7 +57,7 @@ const state = { page: 'dashboard', currentHelpId: 'p1', filter: 'all' };
 const titles = {
   dashboard: '工作台', queue: '待整理求助', detail: '整理求助',
   knowledge: '候选知识审核', moderation: '内容与举报', campus: '校区内容共享',
-  digital: '数字商品审核', sellers: '认证卖家审核', acts: '活动审核'
+  digital: '学习资料审核', sellers: '售卖权限审核', acts: '活动审核'
 };
 function el(id){ return document.getElementById(id); }
 function toast(t){
@@ -204,7 +204,7 @@ function pageModeration(){
 }
 function pageDigital(){
   var list = (M.digitalGoods || []).slice();
-  el('content').innerHTML = '<div class="banner info">数字商品需内容与权利风险审核后方可上架。可暂停销售与冻结结算。</div>' +
+  el('content').innerHTML = '<div class="banner info">学习资料审核仅作违规风险拦截，不构成平台对内容质量/权利的认证或担保。可下架并暂停结算，但不代发布者担责。</div>' +
     '<div class="card" style="margin-top:12px"><div class="table-wrap"><table><thead><tr><th>商品</th><th>卖家</th><th>价格</th><th>状态</th><th>操作</th></tr></thead><tbody>' +
     list.map(function(d){
       var st = d.status || '在售';
@@ -219,7 +219,7 @@ function pageDigital(){
 }
 function pageSellers(){
   var list = M.sellerApps || [];
-  el('content').innerHTML = '<div class="banner">认证卖家需核验联系人、销售内容与结算信息。通过前不可发布数字商品。</div>' +
+  el('content').innerHTML = '<div class="banner">售卖权限仅登记联系人、售卖说明与结算信息。通过=可上架，≠平台认证。内容与权利责任归发布者。</div>' +
     '<div class="card" style="margin-top:12px"><div class="table-wrap"><table><thead><tr><th>申请人</th><th>销售内容</th><th>时间</th><th>状态</th><th>操作</th></tr></thead><tbody>' +
     list.map(function(s, idx){
       var ops = (String(s.status).indexOf('待')>=0)
@@ -228,7 +228,7 @@ function pageSellers(){
       return '<tr><td><b>'+s.name+'</b></td><td>'+s.content+'</td><td class="muted">'+s.time+'</td><td><span class="chip '+statusChip(s.status)+'">'+s.status+'</span></td><td class="row">'+ops+'</td></tr>';
     }).join('') + '</tbody></table></div></div>';
   el('content').querySelectorAll('[data-i]').forEach(function(b){
-    b.onclick = function(){ list[+b.dataset.i].status='已通过'; toast('已通过认证'); pageSellers(); };
+    b.onclick = function(){ list[+b.dataset.i].status='已通过'; toast('已开通售卖权限'); pageSellers(); };
   });
 }
 function pageActs(){

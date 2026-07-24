@@ -136,13 +136,13 @@ window.CAMPUS_MOCK = {
     { id: 'g6', title: '线性代数教材', price: 12, campus: '长安校区', degree: '6 成新', seller: '豆豆', trust: '注册 90 天 · 0 次交易', img: '📗', status: '已售出', category: '教材' }
   ],
   digitalGoods: [
-    { id: 'd1', title: '高数期末复习笔记 v3', price: 12.9, course: '高等数学', year: '2025-2026', sales: 128, seller: '认证卖家 · 清清', sellerId: 'u_qing', preview: '含公式推导与真题思路（样张 3 页）', version: 'v3', pages: 46, size: '8.2 MB', fileType: 'PDF', rights: '原创笔记', refund: '未下载可 24h 内申请退款；已下载按规则审核', status: '在售', updates: true, campus: '长安校区', major: '全校公共课', updatedAt: '2026-06-18', cover: '📐' },
-    { id: 'd2', title: 'C 语言上机题解析', price: 9.9, course: '程序设计', year: '2025', sales: 76, seller: '认证卖家 · CodeLab', sellerId: 'u_code', preview: '原创解析，禁止用于考试作弊', version: 'v1.2', pages: 28, size: '3.4 MB', fileType: 'PDF', rights: '原创解析', refund: '未下载可 24h 退；已交付按「内容明显不符」处理', status: '在售', updates: false, campus: '长安校区', major: '计算机相关', updatedAt: '2026-05-02', cover: '💻' },
-    { id: 'd3', title: '电路基础重点卡片', price: 6.6, course: '电路', year: '2025', sales: 33, seller: '认证卖家 · 清清', sellerId: 'u_qing', preview: '重点卡片，含常见易错点', version: 'v1', pages: 12, size: '1.1 MB', fileType: 'PDF', rights: '原创整理', refund: '未下载可退', status: '在售', updates: false, campus: '雁塔校区', major: '电子信息', updatedAt: '2026-04-12', cover: '🔌' },
-    { id: 'd4', title: '英语四级词汇清单', price: 5.9, course: '大学英语', year: '2026', sales: 201, seller: '认证卖家 · WordLab', sellerId: 'u_word', preview: '高频词 + 例句，可打印', version: 'v2', pages: 20, size: '2.0 MB', fileType: 'PDF', rights: '原创汇编', refund: '未下载可退', status: '在售', updates: true, campus: '长安校区', major: '全校', updatedAt: '2026-07-01', cover: '🔤' },
-    { id: 'd5', title: '操作系统期末提纲', price: 11.0, course: '操作系统', year: '2025', sales: 54, seller: '认证卖家 · 清清', sellerId: 'u_qing', preview: '提纲 + 简答题模板', version: 'v1.1', pages: 18, size: '1.8 MB', fileType: 'PDF', rights: '原创', refund: '未下载可退', status: '审核中', updates: false, campus: '长安校区', major: '计算机', updatedAt: '2026-07-20', cover: '🖥️' },
-    { id: 'd6', title: '离散数学证明模板', price: 8.8, course: '离散数学', year: '2025-2026', sales: 42, seller: '认证卖家 · CodeLab', sellerId: 'u_code', preview: '常见证明结构与例题拆解（样张 2 页）', version: 'v1', pages: 22, size: '2.6 MB', fileType: 'PDF', rights: '原创整理', refund: '未下载可 24h 退', status: '在售', updates: false, campus: '长安校区', major: '计算机', updatedAt: '2026-06-30', cover: '🧩' },
-    { id: 'd7', title: '通信原理公式速查', price: 7.5, course: '通信原理', year: '2025', sales: 19, seller: '认证卖家 · 清清', sellerId: 'u_qing', preview: '公式卡 + 典型题型提示', version: 'v1', pages: 10, size: '0.9 MB', fileType: 'PDF', rights: '原创笔记', refund: '未下载可退', status: '在售', updates: true, campus: '雁塔校区', major: '通信工程', updatedAt: '2026-05-28', cover: '📡' }
+    { id: 'd1', title: '高数期末复习笔记 v3', price: 12.9, course: '高等数学', year: '2025-2026', sales: 128, seller: '发布者 · 清清', sellerId: 'u_qing', preview: '含公式推导与真题思路（样张 3 页）', version: 'v3', pages: 46, size: '8.2 MB', fileType: 'PDF', rights: '原创笔记', refund: '未下载可 24h 内申请退款；已下载按规则审核', status: '在售', updates: true, campus: '长安校区', major: '全校公共课', updatedAt: '2026-06-18', cover: '📐' },
+    { id: 'd2', title: 'C 语言上机题解析', price: 9.9, course: '程序设计', year: '2025', sales: 76, seller: '发布者 · CodeLab', sellerId: 'u_code', preview: '原创解析，禁止用于考试作弊', version: 'v1.2', pages: 28, size: '3.4 MB', fileType: 'PDF', rights: '原创解析', refund: '未下载可 24h 退；已交付按「内容明显不符」处理', status: '在售', updates: false, campus: '长安校区', major: '计算机相关', updatedAt: '2026-05-02', cover: '💻' },
+    { id: 'd3', title: '电路基础重点卡片', price: 6.6, course: '电路', year: '2025', sales: 33, seller: '发布者 · 清清', sellerId: 'u_qing', preview: '重点卡片，含常见易错点', version: 'v1', pages: 12, size: '1.1 MB', fileType: 'PDF', rights: '原创整理', refund: '未下载可退', status: '在售', updates: false, campus: '雁塔校区', major: '电子信息', updatedAt: '2026-04-12', cover: '🔌' },
+    { id: 'd4', title: '英语四级词汇清单', price: 5.9, course: '大学英语', year: '2026', sales: 201, seller: '发布者 · WordLab', sellerId: 'u_word', preview: '高频词 + 例句，可打印', version: 'v2', pages: 20, size: '2.0 MB', fileType: 'PDF', rights: '原创汇编', refund: '未下载可退', status: '在售', updates: true, campus: '长安校区', major: '全校', updatedAt: '2026-07-01', cover: '🔤' },
+    { id: 'd5', title: '操作系统期末提纲', price: 11.0, course: '操作系统', year: '2025', sales: 54, seller: '发布者 · 清清', sellerId: 'u_qing', preview: '提纲 + 简答题模板', version: 'v1.1', pages: 18, size: '1.8 MB', fileType: 'PDF', rights: '原创', refund: '未下载可退', status: '审核中', updates: false, campus: '长安校区', major: '计算机', updatedAt: '2026-07-20', cover: '🖥️' },
+    { id: 'd6', title: '离散数学证明模板', price: 8.8, course: '离散数学', year: '2025-2026', sales: 42, seller: '发布者 · CodeLab', sellerId: 'u_code', preview: '常见证明结构与例题拆解（样张 2 页）', version: 'v1', pages: 22, size: '2.6 MB', fileType: 'PDF', rights: '原创整理', refund: '未下载可 24h 退', status: '在售', updates: false, campus: '长安校区', major: '计算机', updatedAt: '2026-06-30', cover: '🧩' },
+    { id: 'd7', title: '通信原理公式速查', price: 7.5, course: '通信原理', year: '2025', sales: 19, seller: '发布者 · 清清', sellerId: 'u_qing', preview: '公式卡 + 典型题型提示', version: 'v1', pages: 10, size: '0.9 MB', fileType: 'PDF', rights: '原创笔记', refund: '未下载可退', status: '在售', updates: true, campus: '雁塔校区', major: '通信工程', updatedAt: '2026-05-28', cover: '📡' }
   ],
   seller: {
     status: 'none',
@@ -169,10 +169,10 @@ window.CAMPUS_MOCK = {
   notices: [
     { title: '你的求助帖收到 2 条新回复', time: '10 分钟前', type: '社区' },
     { title: '管理员已整理「南区快递站」相关回答', time: '昨天', type: '社区' },
-    { title: '数字商品《高数笔记》已交付', time: '2 天前', type: '交易' },
+    { title: '学习资料《高数笔记》已交付', time: '2 天前', type: '交易' },
     { title: '活动「春季社团联展」地点有更新', time: '昨天', type: '活动' },
     { title: '你的举报已处理：评论已隐藏', time: '3 天前', type: '安全' },
-    { title: '认证卖家申请可随时提交', time: '本周', type: '系统' }
+    { title: '开通学习资料售卖可随时提交', time: '本周', type: '系统' }
   ],
   helpQueue: [
     { id: 'p1', title: '重修报名截止时间', replies: 3, heat: '高', fromAI: true, status: '待整理', updated: '10 分钟前' },
