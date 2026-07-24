@@ -149,6 +149,7 @@
   .chip.gray { background: #EEF1F0; color: #566; }
   .chip.orange { background: #FFF1E6; color: #B8621B; }
   .chip.red { background: #FDECEA; color: var(--danger); }
+  .chip.ok { background: #E8F7EE; color: #1F7A4C; }
   .btn {
     border: 0; border-radius: 12px; padding: 11px 14px; font-size: 14px; font-weight: 650;
     cursor: pointer; color: #fff;
@@ -202,6 +203,31 @@
   .sheet-item {
     padding: 14px; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 14px;
   }
+  .sheet-panel.related {
+    max-height: 78%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 0 18px;
+    background: #FFFcf8;
+  }
+  .related-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 14px 14px 10px; border-bottom: 1px solid var(--line);
+  }
+  .related-head b { font-size: 14px; }
+  .related-body { overflow: auto; padding: 12px 14px 8px; flex: 1; }
+  .related-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    padding: 10px 14px 0; border-top: 1px solid var(--line);
+  }
+  .related-comment-box {
+    display: flex; gap: 8px; align-items: center; margin-top: 10px;
+  }
+  .related-mini {
+    margin-top: 10px; padding: 10px; border-radius: 12px;
+    background: #fff; border: 1px solid #D7E7E0; cursor: pointer;
+  }
+  .related-mini:active { background: #F4FAF7; }
   .home-ai {
     margin: 12px 14px; padding: 14px; border-radius: 16px; color: #fff;
     background: linear-gradient(145deg, #1F6B5A 0%, #2F8F78 55%, #3FA48A 100%);
@@ -423,7 +449,7 @@
         <div class="sheet" id="sheet"></div>
       </div>
     </div>
-    <div class="muted" style="font-size:12px">提示：点「想收四六级耳机 / 无答案发帖 / 失物 / 私信」可串完整演示路径</div>
+    <div class="muted" style="font-size:12px">提示：点「想收四六级耳机 / 无答案相关帖 / 失物 / 私信」可串完整演示路径</div>
   </div>
 </div>
 <script>
@@ -435,10 +461,23 @@ const state = {
   aiInput: '',
   aiMessages: [],
   postDraft: '',
+  relatedPostId: '',
+  autoOpenRelated: false,
   marketKeyword: '',
   marketCampus: '长安校区',
   currentPostId: 'p1',
   currentGoodsId: 'g1',
+  currentDigitalId: 'd1',
+  currentOrderId: '',
+  sellerTab: 'goods',
+  digitalFilter: '',
+  digitalBuyerTab: 'shop',
+  digitalSort: 'hot',
+  payOrderId: '',
+  searchQ: '',
+  campusPicked: false,
+  promoClosed: false,
+  squareSort: 'new',
   currentActivityId: 'a1',
   currentChatId: 'c1',
   lostDraft: { kind: '丢失', title: '', place: '', desc: '' },
@@ -451,12 +490,15 @@ const state = {
 const flows = [
   { title: '1. 登录进入本校', desc: '专属入口锁定西安邮电大学', run: () => go('login', true) },
   { title: '2. AI 有答案', desc: '图书馆闭馆时间 + 来源', run: () => { go('home', true); setTimeout(() => askAI(M.aiScenarios.library.q), 200); } },
-  { title: '3. AI 无答案转广场', desc: '生成草稿 → 发帖', run: () => { go('home', true); setTimeout(() => askAI(M.aiScenarios.unknown.q), 200); } },
+  { title: '3. AI 无答案转广场', desc: '相关帖弹层 + 评论 / 发新帖', run: () => { go('home', true); setTimeout(() => askAI(M.aiScenarios.unknown.q), 200); } },
   { title: '4. AI 路由闲置', desc: '四六级耳机筛选', run: () => { go('home', true); setTimeout(() => askAI(M.aiScenarios.headphone.q), 200); } },
   { title: '5. 广场顶部失物', desc: '失物模块 + 动态流', run: () => go('square', true) },
   { title: '6. 管理员已整理样例', desc: '帖子详情展示整理态', run: () => openPost('p3') },
   { title: '7. 闲置私信', desc: '商品详情 → 会话', run: () => openGoods('g1') },
   { title: '8. 活动推广', desc: '活动详情含推广标', run: () => openActivity('a1') },
+  { title: '9. 数字商品买家', desc: '商店 → 下单支付 → 已购交付', run: () => { state.digitalBuyerTab='shop'; go('digital', true); } },
+  { title: '10. 认证卖家', desc: '申请 → 上架 → 结算', run: () => go('seller-apply', true) },
+  { title: '11. 搜索 / 组织 / 推广', desc: '搜索、组织身份、推广账户', run: () => go('search', true) },
 ];
 
 function $(id){ return document.getElementById(id); }
@@ -517,8 +559,10 @@ function openPublishSheet(){
     <div style="text-align:center;font-weight:700;margin-bottom:8px">发布</div>
     <div class="sheet-item" data-go="compose">发广场动态</div>
     <div class="sheet-item" data-go="lost-publish">发布失物招领</div>
-    <div class="sheet-item" data-go="market">发布个人闲置（示意）</div>
-    <div class="sheet-item" data-go="activities">发布活动（需组织身份）</div>
+    <div class="sheet-item" data-go="used-publish">发布个人闲置</div>
+    <div class="sheet-item" data-go="digital-publish">发布数字商品（需认证卖家）</div>
+    <div class="sheet-item" data-go="activity-publish">发布活动（需组织身份）</div>
+    <div class="sheet-item" data-go="search">搜索校园内容</div>
     <div class="sheet-item" style="border:0;color:#888;text-align:center" data-close>取消</div>
   </div>`;
   sheet.onclick = (e) => {
@@ -529,9 +573,110 @@ function openPublishSheet(){
     const g = item.dataset.go;
     if (g === 'compose') { state.postDraft=''; go('compose'); }
     else if (g === 'lost-publish') go('lost-publish');
-    else if (g === 'market') { toast('演示：进入闲置频道'); go('market'); }
+    else if (g === 'used-publish') go('used-publish');
+    else if (g === 'market') go('market');
+    else if (g === 'digital-publish') go('digital-publish');
+    else if (g === 'activity-publish') go('activity-publish');
+    else if (g === 'search') go('search');
     else go('activities');
   };
+}
+function closeSheet(){
+  const sheet = $('sheet');
+  if (!sheet) return;
+  sheet.classList.remove('show');
+  sheet.innerHTML = '';
+  sheet.onclick = null;
+}
+function getRelatedPosts(sc){
+  if (!sc) return [];
+  if (Array.isArray(sc.relatedPostIds) && sc.relatedPostIds.length) {
+    return sc.relatedPostIds.map(id => M.posts.find(p => p.id === id)).filter(Boolean);
+  }
+  const q = (sc.q || state.aiInput || '').toLowerCase();
+  const keys = [];
+  if (/作业|老师|课程|数据结构|难不难|多不多/.test(q)) keys.push('数据结构', '作业', '老师', '课程');
+  if (!keys.length) return [];
+  return M.posts.filter(p => keys.some(k => p.content.includes(k)));
+}
+function openRelatedPostSheet(postId, opts={}){
+  const p = M.posts.find(x => x.id === postId) || M.posts[0];
+  if (!p) return;
+  state.relatedPostId = p.id;
+  if (!M.postComments[p.id]) M.postComments[p.id] = [];
+  const comments = M.postComments[p.id];
+  const sheet = $('sheet');
+  sheet.classList.add('show');
+  const fromAI = p.fromAI ? '<span class="chip">AI求助</span>' : '';
+  const resolved = p.resolved ? '<span class="chip gray">已整理</span>' : '';
+  const resolvedBlock = p.resolved
+    ? ('<div class="card pad" style="margin-top:10px;background:var(--soft)"><span class="chip">管理员已整理</span><div style="margin-top:8px;font-size:12px">' + (p.adminNote || '') + '</div></div>')
+    : '<div class="banner" style="margin:10px 0 0">以下为公开评论，可直接参考或继续追问同学。</div>';
+  const commentHtml = comments.length
+    ? comments.map(c => '<div class="list-item"><b>' + c.user + '</b><div style="margin-top:4px;font-size:13px">' + c.text + '</div><div class="muted" style="font-size:11px;margin-top:4px">' + c.time + '</div></div>').join('')
+    : '<div class="muted" style="font-size:12px">暂无评论，来做第一条回复吧</div>';
+  sheet.innerHTML = [
+    '<div class="sheet-panel related" id="relatedPanel">',
+      '<div class="related-head">',
+        '<div><div class="chip">广场已有相关讨论</div><b style="display:block;margin-top:6px">参考同学真实回复</b></div>',
+        '<button class="btn ghost sm" data-close>关闭</button>',
+      '</div>',
+      '<div class="related-body">',
+        '<div class="row space">',
+          '<div class="row">',
+            '<div class="avatar" style="width:32px;height:32px;font-size:12px">' + p.author[0] + '</div>',
+            '<div><b style="font-size:13px">' + p.author + '</b><div class="muted" style="font-size:11px">' + p.time + ' · ' + p.campus + '</div></div>',
+          '</div>',
+          '<div class="row" style="gap:4px">' + fromAI + resolved + '</div>',
+        '</div>',
+        '<div style="margin-top:10px;font-size:14px;line-height:1.6">' + p.content + '</div>',
+        '<div class="muted" style="margin-top:8px;font-size:12px">♥ ' + p.likes + ' · 评论 ' + comments.length + '</div>',
+        resolvedBlock,
+        '<h3 class="section-title" style="margin-top:14px">评论区 ' + comments.length + '</h3>',
+        '<div class="card pad" style="margin-top:8px">' + commentHtml + '</div>',
+        '<div class="related-comment-box">',
+          '<input class="input" id="relatedComment" placeholder="写一条评论…" />',
+          '<button class="btn sm" id="sendRelatedComment">发送</button>',
+        '</div>',
+      '</div>',
+      '<div class="related-actions">',
+        '<button class="btn ghost" id="relatedOpenFull">完整详情</button>',
+        '<button class="btn" id="relatedNewPost">发布新帖</button>',
+      '</div>',
+    '</div>'
+  ].join('');
+  const panel = $('relatedPanel');
+  if (panel) panel.onclick = (e) => e.stopPropagation();
+  sheet.onclick = (e) => {
+    if (e.target.dataset.close !== undefined || e.target === sheet) closeSheet();
+  };
+  const send = $('sendRelatedComment');
+  if (send) send.onclick = () => {
+    const box = $('relatedComment');
+    const v = ((box && box.value) || '').trim();
+    if (!v) { toast('先写点内容再发送'); return; }
+    M.postComments[p.id].unshift({ user: M.me.name, text: v, time: '刚刚' });
+    p.comments = (p.comments || 0) + 1;
+    toast('评论已发布');
+    openRelatedPostSheet(p.id, opts);
+  };
+  const full = $('relatedOpenFull');
+  if (full) full.onclick = () => { closeSheet(); openPost(p.id); };
+  const neu = $('relatedNewPost');
+  if (neu) neu.onclick = () => {
+    closeSheet();
+    state.postDraft = opts.draft || state.postDraft || M.aiScenarios.unknown.draft;
+    go('ai-to-post');
+  };
+}
+function maybeAutoOpenRelated(){
+  if (!state.autoOpenRelated) return;
+  state.autoOpenRelated = false;
+  const sc = (state.aiMessages || []).slice().reverse().find(m => m.role === 'ai' && m.kind === 'no_answer');
+  const related = getRelatedPosts(sc || M.aiScenarios.unknown);
+  if (related[0]) {
+    setTimeout(() => openRelatedPostSheet(related[0].id, { draft: (sc && sc.draft) || M.aiScenarios.unknown.draft }), 280);
+  }
 }
 function navBar(title, opts={}){
   const backBtn = opts.back ? `<button class="back" id="navBack">‹ 返回</button>` : `<span></span>`;
@@ -544,13 +689,14 @@ function navBar(title, opts={}){
 function pageLogin(){
   navBar('登录');
   $('tabbar').style.display='none';
+  const camps = (M.school.campuses||[]).map(c=>`<option value="${c}" ${c===M.me.campus?'selected':''}>${c}</option>`).join('');
   $('content').innerHTML = `
     <div class="pad stack" style="padding-top:28px">
       <div class="row" style="gap:12px">
         <div class="avatar lg">${M.school.logoText}</div>
         <div>
           <div style="font-size:20px;font-weight:750">${M.school.name}校园通</div>
-          <div class="muted" style="font-size:12px;margin-top:4px">由专属入口进入 · 已锁定本校实例</div>
+          <div class="muted" style="font-size:12px;margin-top:4px">专属入口进入 · 已锁定本校实例</div>
         </div>
       </div>
       <div class="banner">${M.school.disclaimer}。学院/专业等资料均为用户自述，不代表学籍认证。</div>
@@ -558,14 +704,18 @@ function pageLogin(){
       <input class="input" value="138****2618" readonly />
       <label class="muted" style="font-size:12px">验证码</label>
       <input class="input" value="246810" readonly />
+      <label class="muted" style="font-size:12px">首次登录选择校区</label>
+      <select id="campSel">${camps}</select>
       <button class="btn block" id="doLogin">进入${M.school.shortName}校园通</button>
-      <div class="muted" style="font-size:11px;line-height:1.5">演示说明：此入口模拟「西邮专属太阳码」。不会出现学校切换列表。</div>
+      <div class="muted" style="font-size:11px;line-height:1.5">无学校参数时：已绑定用户回本校；未绑定仅引导专属入口加入，不展示跨校内容。</div>
     </div>`;
-  $('doLogin').onclick = () => go('home', true);
+  $('doLogin').onclick = () => {
+    const c = $('campSel').value; M.me.campus = c; state.campusPicked = true; go('home', true);
+  };
 }
 
 function pageHome(){
-  navBar(M.school.name);
+  navBar(M.school.name, { right:'搜索', onRight:()=>go('search') });
   clearInterval(window.__actTimer);
   const acts = M.activities || [];
   if (state.activityIndex >= acts.length) state.activityIndex = 0;
@@ -621,6 +771,14 @@ function pageHome(){
         <button class="btn ghost sm" onclick="toast('已记录：信息过期')">信息过期</button>
       </div>
     </div>`;
+    if (m.kind==='route_sell') return `<div class="msg-ai">
+      <div>识别到你想<strong>${m.intent||'出售个人闲置'}</strong>。</div>
+      <button class="btn" style="margin-top:10px" id="goSell">${m.routeLabel||'打开闲置发布'}</button>
+    </div>`;
+    if (m.kind==='route_digital') return `<div class="msg-ai">
+      <div>${m.routeLabel||'已为你筛选数字商品'}</div>
+      <button class="btn" style="margin-top:10px" id="goDig">打开数字商品</button>
+    </div>`;
     if (m.kind==='route') return `<div class="msg-ai">
       <div>识别到你想<strong>${m.intent}</strong>。</div>
       <div class="card pad" style="margin-top:10px">
@@ -642,13 +800,27 @@ function pageHome(){
         <button class="btn sm" id="goLostPub">发布丢失</button>
       </div>
     </div>`;
-    return `<div class="msg-ai">
+    const related = getRelatedPosts(m);
+      const top = related[0];
+      return `<div class="msg-ai">
       <span class="chip red">无法确认</span>
       <div style="margin-top:8px">${m.answer}</div>
-      <div class="card pad" style="margin-top:10px;background:var(--soft);border-color:#CDE6DE">
-        <b>发布到校园广场</b>
-        <button class="btn block" style="margin-top:10px" id="toPost">生成帖子草稿</button>
-      </div>
+      ${top ? `<div class="related-mini" data-related="${top.id}">
+          <div class="row space">
+            <span class="chip">相关帖子</span>
+            <span class="muted" style="font-size:11px">♥ ${top.likes} · 评论 ${top.comments}</span>
+          </div>
+          <div style="margin-top:8px;font-size:13px;line-height:1.5">${top.content}</div>
+          <div class="muted" style="margin-top:6px;font-size:11px">${top.author} · ${top.time}</div>
+        </div>
+        <div class="row" style="margin-top:10px;gap:8px">
+          <button class="btn sm" id="openRelated">查看帖子与评论</button>
+          <button class="btn ghost sm" id="toPost">发布新帖</button>
+        </div>` : `<div class="card pad" style="margin-top:10px;background:var(--soft);border-color:#CDE6DE">
+          <b>发布到校园广场</b>
+          <div class="muted" style="font-size:12px;margin-top:6px">暂未找到高度相关帖子，可生成草稿发新帖</div>
+          <button class="btn block" style="margin-top:10px" id="toPost">生成帖子草稿</button>
+        </div>`}
     </div>`;
   }).join('');
 
@@ -693,12 +865,25 @@ function pageHome(){
   const actAll = $('actAll'); if (actAll) actAll.onclick = (e)=>{ e.stopPropagation(); go('activities'); };
 
   const gm=$('goMarket'); if(gm) gm.onclick=()=>{ state.marketKeyword='四六级耳机'; state.marketCampus=M.me.campus; go('market'); toast('已带入筛选条件'); };
+  const gs=$('goSell'); if(gs) gs.onclick=()=>{ state.usedDraft={ title:'线性代数教材', category:'教材' }; go('used-publish'); };
+  const gd=$('goDig'); if(gd) gd.onclick=()=>go('digital');
   const ga=$('goAct'); if(ga) ga.onclick=()=>go('activities');
   const gls=$('goLostSearch'); if(gls) gls.onclick=()=>go('lost');
   const glp=$('goLostPub'); if(glp) glp.onclick=()=>go('lost-publish');
   const tp=$('toPost'); if(tp) tp.onclick=()=>{ state.postDraft = M.aiScenarios.unknown.draft; go('ai-to-post'); };
+  const or=$('openRelated'); if(or) or.onclick=()=>{
+    const sc = (state.aiMessages||[]).slice().reverse().find(m=>m.role==='ai' && m.kind==='no_answer') || M.aiScenarios.unknown;
+    const related = getRelatedPosts(sc);
+    if (related[0]) openRelatedPostSheet(related[0].id, { draft: sc.draft || M.aiScenarios.unknown.draft });
+  };
 
   $('content').onclick = (e)=>{
+    const rel = e.target.closest('[data-related]');
+    if (rel) {
+      const sc = (state.aiMessages||[]).slice().reverse().find(m=>m.role==='ai' && m.kind==='no_answer') || M.aiScenarios.unknown;
+      openRelatedPostSheet(rel.dataset.related, { draft: sc.draft || M.aiScenarios.unknown.draft });
+      return;
+    }
     const item = e.target.closest('[data-act-idx]');
     if (item) {
       state.activityIndex = +item.dataset.actIdx;
@@ -731,14 +916,17 @@ function pageHome(){
 
   const chat = document.querySelector('.home-chat');
   if (chat) chat.scrollTop = chat.scrollHeight;
+  maybeAutoOpenRelated();
 }
 
 function detectScenario(q){
   if (/图书馆|关门|几点/.test(q)) return M.aiScenarios.library;
+  if (/想卖|出一本|出个|转让/.test(q)) return M.aiScenarios.sell || { type:'route_sell', intent:'出售个人闲置', routeLabel:'打开闲置发布', draft:{ title:q, category:'教材' } };
   if (/耳机|四六级|想收|想买/.test(q)) return M.aiScenarios.headphone;
   if (/校园卡|丢了|失物/.test(q)) return M.aiScenarios.lost;
-  if (/社团|纳新|活动/.test(q)) return { q, type:'route-act', routeLabel:'已为你筛选近期社团活动' };
-  if (/作业|老师|难不难|多不多/.test(q)) return M.aiScenarios.unknown;
+  if (/复习资料|数字|笔记|资料有吗|高数复习/.test(q)) return M.aiScenarios.digital || { type:'route_digital', routeLabel:'已为你筛选数字商品' };
+  if (/社团|纳新|活动/.test(q)) return M.aiScenarios.activity || { q, type:'route-act', routeLabel:'已为你筛选近期社团活动' };
+  if (/作业|老师|难不难|多不多|数据结构/.test(q)) return M.aiScenarios.unknown;
   return M.aiScenarios.unknown;
 }
 function askAI(q){
@@ -757,6 +945,8 @@ function askAI(q){
     state.aiMessages.push({ role:'ai', kind:'hybrid', ...sc });
   } else {
     state.aiMessages.push({ role:'ai', kind:'no_answer', ...sc });
+    const related = getRelatedPosts(sc);
+    state.autoOpenRelated = related.length > 0;
   }
   go('home');
 }
@@ -774,6 +964,14 @@ function pageAI(){
         <button class="btn ghost sm" onclick="toast('已记录：信息过期')">信息过期</button>
       </div>
       <div class="muted" style="font-size:11px;margin-top:8px">答案仅供参考，重要事项以学校公开渠道最新信息为准。</div>
+    </div>`;
+    if (m.kind==='route_sell') return `<div class="msg-ai">
+      <div>识别到你想<strong>${m.intent||'出售个人闲置'}</strong>。</div>
+      <button class="btn" style="margin-top:10px" id="goSell">${m.routeLabel||'打开闲置发布'}</button>
+    </div>`;
+    if (m.kind==='route_digital') return `<div class="msg-ai">
+      <div>${m.routeLabel||'已为你筛选数字商品'}</div>
+      <button class="btn" style="margin-top:10px" id="goDig">打开数字商品</button>
     </div>`;
     if (m.kind==='route') return `<div class="msg-ai">
       <div>识别到你想<strong>${m.intent}</strong>。</div>
@@ -796,14 +994,27 @@ function pageAI(){
         <button class="btn sm" id="goLostPub">发布丢失信息</button>
       </div>
     </div>`;
-    return `<div class="msg-ai">
+    const related = getRelatedPosts(m);
+      const top = related[0];
+      return `<div class="msg-ai">
       <span class="chip red">无法确认</span>
       <div style="margin-top:8px">${m.answer}</div>
-      <div class="card pad" style="margin-top:10px;background:var(--soft);border-color:#CDE6DE">
-        <b>一键求助校园广场</b>
-        <div class="muted" style="font-size:12px;margin-top:6px">不会自动发帖，需你确认草稿</div>
-        <button class="btn block" style="margin-top:10px" id="toPost">生成广场帖子草稿</button>
-      </div>
+      ${top ? `<div class="related-mini" data-related="${top.id}">
+          <div class="row space">
+            <span class="chip">相关帖子</span>
+            <span class="muted" style="font-size:11px">♥ ${top.likes} · 评论 ${top.comments}</span>
+          </div>
+          <div style="margin-top:8px;font-size:13px;line-height:1.5">${top.content}</div>
+          <div class="muted" style="margin-top:6px;font-size:11px">${top.author} · ${top.time}</div>
+        </div>
+        <div class="row" style="margin-top:10px;gap:8px">
+          <button class="btn sm" id="openRelated">查看帖子与评论</button>
+          <button class="btn ghost sm" id="toPost">发布新帖</button>
+        </div>` : `<div class="card pad" style="margin-top:10px;background:var(--soft);border-color:#CDE6DE">
+          <b>一键求助校园广场</b>
+          <div class="muted" style="font-size:12px;margin-top:6px">不会自动发帖，需你确认草稿</div>
+          <button class="btn block" style="margin-top:10px" id="toPost">生成广场帖子草稿</button>
+        </div>`}
     </div>`;
   }).join('');
   $('content').innerHTML = `
@@ -819,11 +1030,24 @@ function pageAI(){
     const gls=$('goLostSearch'); if(gls) gls.onclick=()=>go('lost');
     const glp=$('goLostPub'); if(glp) glp.onclick=()=>go('lost-publish');
     const tp=$('toPost'); if(tp) tp.onclick=()=>{ state.postDraft = M.aiScenarios.unknown.draft; go('ai-to-post'); };
+    const or=$('openRelated'); if(or) or.onclick=()=>{
+      const sc = (state.aiMessages||[]).slice().reverse().find(m=>m.role==='ai' && m.kind==='no_answer') || M.aiScenarios.unknown;
+      const related = getRelatedPosts(sc);
+      if (related[0]) openRelatedPostSheet(related[0].id, { draft: sc.draft || M.aiScenarios.unknown.draft });
+    };
   };
   bind();
+  $('content').onclick = (e)=>{
+    const rel = e.target.closest('[data-related]');
+    if (rel) {
+      const sc = (state.aiMessages||[]).slice().reverse().find(m=>m.role==='ai' && m.kind==='no_answer') || M.aiScenarios.unknown;
+      openRelatedPostSheet(rel.dataset.related, { draft: sc.draft || M.aiScenarios.unknown.draft });
+    }
+  };
   $('aiSend').onclick=()=>{
     const v=$('aiBox').value.trim(); if(!v) return; askAI(v);
   };
+  maybeAutoOpenRelated();
 }
 
 function pageAiToPost(){
@@ -846,8 +1070,26 @@ function pageAiToPost(){
       <div class="muted" style="font-size:11px">结案与知识沉淀由管理员整理验证，不依赖你点击「已解决」。</div>
     </div>`;
   $('publishPost').onclick=()=>{
+    const content = (($('draft').value) || '').trim() || M.aiScenarios.unknown.draft;
+    const id = 'p_new_' + Date.now();
+    const post = {
+      id,
+      author: '匿名同学 ' + String.fromCharCode(65 + (M.posts.length % 26)),
+      anon: true,
+      time: '刚刚',
+      campus: M.me.campus,
+      content,
+      likes: 0,
+      comments: 0,
+      fromAI: true,
+      resolved: false,
+      adminNote: ''
+    };
+    M.posts.unshift(post);
+    M.postComments[id] = [];
+    M.helpQueue.unshift({ id, title: content.slice(0, 18), replies: 0, heat: '中', fromAI: true, status: '待整理', updated: '刚刚' });
     toast('已发布，等待同学回答与管理员整理');
-    state.currentPostId='p1';
+    state.currentPostId = id;
     go('post');
   };
 }
@@ -881,7 +1123,7 @@ function pageSquare(){
     </div>
     <div class="row space" style="padding:4px 14px 8px">
       <h3 class="section-title">最新动态</h3>
-      <span class="muted" style="font-size:12px">无分类切换</span>
+      <div class="row" style="gap:6px"><span class="chip">最新</span><span class="chip gray">热度</span><span class="chip gray" style="cursor:pointer" onclick="go('search')">搜索</span></div>
     </div>
     ${M.posts.map(p=>`
       <div class="post" data-post="${p.id}">
@@ -926,10 +1168,31 @@ function pagePost(){
         </div>` : `<div class="banner">等待同学公开回答；有回答后会进入管理端「待整理求助」队列。</div>`}
       <h3 class="section-title">评论 ${comments.length}</h3>
       <div class="card pad">
-        ${comments.map(c=>`<div class="list-item"><b>${c.user}</b><div style="margin-top:4px">${c.text}</div><div class="muted" style="font-size:11px;margin-top:4px">${c.time}</div></div>`).join('')}
+        ${comments.length ? comments.map(c=>`<div class="list-item"><b>${c.user}</b><div style="margin-top:4px">${c.text}</div><div class="muted" style="font-size:11px;margin-top:4px">${c.time}</div></div>`).join('') : '<div class="muted" style="font-size:12px">还没有评论</div>'}
       </div>
+      <div class="row" style="gap:8px">
+        <input class="input" id="postComment" placeholder="写评论…" />
+        <button class="btn sm" id="sendPostComment">发送</button>
+      </div>
+      <button class="btn ghost block" id="postNewFromDetail">相关问题发新帖</button>
       <button class="btn ghost block" onclick="toast('演示：已打开私信请求（次要路径）')">私信作者</button>
     </div>`;
+  const sendPost = $('sendPostComment');
+  if (sendPost) sendPost.onclick = () => {
+    const box = $('postComment');
+    const v = ((box && box.value) || '').trim();
+    if (!v) { toast('先写点内容再发送'); return; }
+    if (!M.postComments[p.id]) M.postComments[p.id] = [];
+    M.postComments[p.id].unshift({ user: M.me.name, text: v, time: '刚刚' });
+    p.comments = (p.comments || 0) + 1;
+    toast('评论已发布');
+    render();
+  };
+  const postNew = $('postNewFromDetail');
+  if (postNew) postNew.onclick = () => {
+    state.postDraft = state.postDraft || M.aiScenarios.unknown.draft || p.content;
+    go('ai-to-post');
+  };
 }
 
 function pageLost(){
@@ -1003,8 +1266,12 @@ function pageActivity(){
         <div>名额：${a.seats}</div>
         <div class="muted" style="font-size:12px">收藏 ${a.fav} · 报名 ${a.joins}</div>
       </div>
-      <button class="btn block" onclick="toast('演示：报名成功，将收到变更通知')">报名参加</button>
-      <button class="btn ghost block" onclick="toast('已收藏')">收藏</button>
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <button class="btn block grow" style="flex:1" onclick="toast('演示：报名成功，变更将通知你')">报名参加</button>
+        <button class="btn ghost" onclick="toast('已收藏')">收藏</button>
+        <button class="btn ghost" onclick="go('report')">举报</button>
+      </div>
+      <button class="btn ghost block" onclick="go('org-apply')">申请组织身份 / 发布活动</button>
     </div>`;
 }
 
@@ -1058,24 +1325,410 @@ function pageGoods(){
         <div class="row"><div class="avatar">${g.seller[0]}</div><div><b>${g.seller}</b><div class="muted" style="font-size:11px">${g.trust}</div></div></div>
         <span class="chip gray">可信度提示</span>
       </div>
-      <button class="btn block" id="chatSeller">通过平台私信联系</button>
+      <div class="row" style="gap:8px">
+        <button class="btn block grow" style="flex:1" id="chatSeller" ${g.status==='已售出'?'disabled':''}>${g.status==='已售出'?'已售出不可联系':'通过平台私信联系'}</button>
+        <button class="btn ghost" onclick="toast('已收藏')">收藏</button>
+        <button class="btn ghost" onclick="go('report')">举报</button>
+      </div>
+      ${g.status && g.status!=='在售' ? `<div class="banner">状态：${g.status}</div>` : ''}
     </div>`;
-  $('chatSeller').onclick=()=>{ state.currentChatId='c1'; go('chat'); toast('已发起会话'); };
+  const cs=$('chatSeller'); if(cs && g.status!=='已售出') cs.onclick=()=>{ state.currentChatId='c1'; go('chat'); toast('已发起会话'); };
 }
 function pageDigital(){
-  navBar('数字商品', { back:true });
+  navBar('数字商品', { back: true, right: '已购', onRight: () => go('digital-owned') });
+  const tab = state.digitalBuyerTab || 'shop';
+  const kw = (state.digitalFilter || '').trim();
+  let list = (M.digitalGoods || []).filter(d => !d.status || d.status === '在售');
+  if (kw) list = list.filter(d => d.title.includes(kw) || d.course.includes(kw) || (d.seller||'').includes(kw));
+  const courses = Array.from(new Set((M.digitalGoods||[]).map(d => d.course).filter(Boolean)));
+
+  if (tab === 'orders') {
+    const orders = (M.digitalOrders || []).filter(o => o.role === 'buyer');
+    $('content').innerHTML = `
+      <div class="pad" style="padding-bottom:8px">
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <span class="chip gray" id="toUsed" style="cursor:pointer">个人闲置</span>
+          <span class="chip" id="tabShop" style="cursor:pointer">逛商店</span>
+          <span class="chip">我的订单</span>
+          <span class="chip gray" id="tabOwned" style="cursor:pointer">已购内容</span>
+        </div>
+      </div>
+      <div class="stack" style="padding:0 14px 18px">
+        ${orders.length ? orders.map(o => `
+          <div class="card pad" data-oid="${o.id}" style="cursor:pointer">
+            <div class="row space"><b>${o.title}</b><span class="chip ${o.status==='已交付'?'':'orange'}">${o.status}</span></div>
+            <div class="muted" style="font-size:12px;margin-top:6px">订单 ${o.id} · ¥${o.price} · ${o.version||''} · ${o.time||''}</div>
+            <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+              <button class="btn sm" data-view="${o.id}">查看内容</button>
+              <button class="btn ghost sm" data-ref="${o.id}">申请退款</button>
+            </div>
+          </div>`).join('') : '<div class="muted">暂无购买订单 · 去商店逛逛</div>'}
+        <button class="btn ghost block" id="backShop">去数字商品商店</button>
+      </div>`;
+    $('toUsed').onclick = () => go('market');
+    $('tabShop').onclick = () => { state.digitalBuyerTab = 'shop'; pageDigital(); };
+    $('tabOwned').onclick = () => go('digital-owned');
+    $('backShop').onclick = () => { state.digitalBuyerTab = 'shop'; pageDigital(); };
+    $('content').querySelectorAll('[data-view]').forEach(b => b.onclick = (e) => { e.stopPropagation(); state.currentOrderId = b.dataset.view; go('digital-owned'); });
+    $('content').querySelectorAll('[data-ref]').forEach(b => b.onclick = (e) => { e.stopPropagation(); const o=(M.digitalOrders||[]).find(x=>x.id===b.dataset.ref); if(o){ o.status='退款中'; toast('已提交退款申请'); pageDigital(); } });
+    return;
+  }
+
+  const sort = state.digitalSort || 'hot';
+  if (sort === 'price_asc') list = list.slice().sort((a,b)=>a.price-b.price);
+  else if (sort === 'price_desc') list = list.slice().sort((a,b)=>b.price-a.price);
+  else if (sort === 'new') list = list.slice().reverse();
+  else list = list.slice().sort((a,b)=>(b.sales||0)-(a.sales||0));
+
+  $('content').innerHTML = `
+    <div class="pad" style="padding-bottom:8px">
+      <div class="row" style="gap:8px;flex-wrap:wrap">
+        <span class="chip gray" id="toUsed" style="cursor:pointer">个人闲置</span>
+        <span class="chip">数字商品</span>
+        <span class="chip gray" id="tabOrders" style="cursor:pointer">我的订单</span>
+        <span class="chip gray" id="tabOwned" style="cursor:pointer">已购内容</span>
+      </div>
+      <div class="row" style="gap:8px;margin-top:10px">
+        <input class="input" id="df" placeholder="搜课程 / 资料名 / 卖家" value="${kw}" />
+        <button class="btn sm" id="dfGo">搜索</button>
+      </div>
+      <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap;overflow:auto">
+        <span class="chip ${!kw?'':'gray'}" data-c="">全部</span>
+        ${courses.map(c => `<span class="chip ${kw===c?'':'gray'}" data-c="${c}" style="cursor:pointer">${c}</span>`).join('')}
+      </div>
+      <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">
+        <span class="chip ${sort==='hot'?'':'gray'}" data-sort="hot" style="cursor:pointer">销量</span>
+        <span class="chip ${sort==='price_asc'?'':'gray'}" data-sort="price_asc" style="cursor:pointer">价格↑</span>
+        <span class="chip ${sort==='price_desc'?'':'gray'}" data-sort="price_desc" style="cursor:pointer">价格↓</span>
+        <span class="chip ${sort==='new'?'':'gray'}" data-sort="new" style="cursor:pointer">最新</span>
+      </div>
+      <div class="banner" style="margin:10px 0 0">支付成功自动交付 · 已购可在线查看 / 短时下载 · 支持退款与侵权投诉</div>
+    </div>
+    <div class="stack" style="padding:0 14px 18px">
+      ${list.map(d => `
+        <div class="card pad dig-card" data-d="${d.id}" style="cursor:pointer;position:relative;overflow:hidden">
+          <div class="row space" style="align-items:flex-start;gap:10px">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(145deg,#1F8A6F,#0F5C4A);color:#fff;display:grid;place-items:center;font-size:18px;flex-shrink:0">📄</div>
+            <div class="grow" style="min-width:0">
+              <div class="row space"><b style="font-size:15px">${d.title}</b><span class="price">¥${d.price}</span></div>
+              <div class="muted" style="font-size:12px;margin-top:5px">${d.course}${d.year ? ' · ' + d.year : ''} · ${d.campus||''}</div>
+              <div style="margin-top:7px;font-size:13px;line-height:1.5;color:var(--ink)">${d.preview}</div>
+              <div class="row space" style="margin-top:8px;gap:8px;flex-wrap:wrap">
+                <span class="chip">${d.seller}</span>
+                <span class="muted" style="font-size:11px">销量 ${d.sales} · ${d.version||''}${d.updates?' · 含更新':''}</span>
+              </div>
+            </div>
+          </div>
+        </div>`).join('') || '<div class="muted">暂无在售数字商品</div>'}
+    </div>`;
+  $('toUsed').onclick = () => go('market');
+  $('tabOrders').onclick = () => { state.digitalBuyerTab = 'orders'; pageDigital(); };
+  $('tabOwned').onclick = () => go('digital-owned');
+  $('dfGo').onclick = () => { state.digitalFilter = $('df').value.trim(); pageDigital(); };
+  $('content').querySelectorAll('[data-c]').forEach(c => c.onclick = () => { state.digitalFilter = c.dataset.c || ''; pageDigital(); });
+  $('content').querySelectorAll('[data-sort]').forEach(c => c.onclick = () => { state.digitalSort = c.dataset.sort; pageDigital(); });
+  $('content').onclick = (e) => { const d = e.target.closest('[data-d]'); if (d) openDigital(d.dataset.d); };
+}
+function openDigital(id){ state.currentDigitalId = id; go('digital-detail'); }
+function pageDigitalDetail(){
+  const d = (M.digitalGoods || []).find(x => x.id === state.currentDigitalId) || (M.digitalGoods || []).find(x => x.status==='在售') || (M.digitalGoods || [])[0];
+  navBar('数字商品详情', { back: true });
+  $('tabbar').style.display = 'none';
+  if (!d) { $('content').innerHTML = '<div class="pad">暂无商品</div>'; return; }
+  const owned = (M.digitalOrders || []).some(o => o.role==='buyer' && o.goodsId===d.id && (o.status==='已交付' || o.status==='退款中'));
   $('content').innerHTML = `
     <div class="pad stack">
-      ${M.digitalGoods.map(d=>`
-        <div class="card pad">
-          <div class="row space"><b>${d.title}</b><span class="price">¥${d.price}</span></div>
-          <div class="muted" style="font-size:12px;margin-top:6px">${d.course} · 销量 ${d.sales}</div>
-          <div style="margin-top:8px;font-size:13px">${d.preview}</div>
-          <div class="muted" style="font-size:11px;margin-top:8px">${d.seller}</div>
-          <button class="btn sm" style="margin-top:10px" onclick="toast('演示：支付成功并自动交付')">购买并自动交付</button>
-        </div>`).join('')}
-      <div class="banner">卖家对权利来源负责；禁止未公开试题、盗版与作弊服务。</div>
+      <div class="card pad" style="min-height:130px;background:linear-gradient(145deg,var(--soft),#fff)">
+        <div class="row" style="gap:8px"><span class="chip">数字商品</span><span class="chip gray">${d.status || '在售'}</span>${d.updates?'<span class="chip orange">含更新</span>':''}</div>
+        <h2 style="margin:12px 0 6px;font-size:20px">${d.title}</h2>
+        <div class="price" style="font-size:24px">¥${d.price}</div>
+        <div class="muted" style="font-size:12px;margin-top:6px">销量 ${d.sales} · ${d.campus || M.me.campus}</div>
+      </div>
+      <div class="card pad stack" style="gap:8px;font-size:13px">
+        <div><b>适用课程</b>　${d.course} · ${d.year || '—'} · ${d.major || '全校'}</div>
+        <div><b>版本信息</b>　${d.version || '—'} · ${d.fileType || 'PDF'} · ${d.pages || '—'} 页 · ${d.size || '—'}</div>
+        <div><b>更新时间</b>　${d.updatedAt || '—'} ${d.updates ? '· 含后续更新' : ''}</div>
+        <div><b>认证卖家</b>　${d.seller}</div>
+        <div class="muted">平台已完成卖家认证（业务权限），不等于学籍认证</div>
+      </div>
+      <div class="card pad">
+        <b>脱敏预览 / 样张</b>
+        <div style="margin-top:8px;font-size:13px;line-height:1.55">${d.preview}</div>
+        <div class="muted" style="font-size:11px;margin-top:8px">完整文件支付后交付，无永久公开链接</div>
+      </div>
+      <div class="card pad">
+        <b>购买须知</b>
+        <div class="muted" style="margin-top:8px;font-size:12px;line-height:1.6">
+          权利来源：${d.rights || '卖家声明'}<br/>
+          退款：${d.refund || '付款前请阅读规则'}<br/>
+          交付：支付成功后自动开放在线查看 / 限次下载<br/>
+          禁止：未公开试题、盗版、代写代考、作弊服务
+        </div>
+      </div>
+      ${owned
+        ? `<button class="btn block" onclick="go('digital-owned')">已购买 · 进入已购内容</button>`
+        : `<button class="btn block" id="buyDigital">立即购买</button>`}
+      <div class="row" style="gap:8px">
+        <button class="btn ghost block grow" onclick="toast('已收藏')">收藏</button>
+        <button class="btn ghost block grow" onclick="go('report')">举报侵权</button>
+      </div>
     </div>`;
+  const buy = $('buyDigital');
+  if (buy) buy.onclick = () => { state.currentDigitalId = d.id; go('digital-checkout'); };
+}
+function pageDigitalCheckout(){
+  const d = (M.digitalGoods || []).find(x => x.id === state.currentDigitalId) || (M.digitalGoods || [])[0];
+  navBar('确认订单', { back: true });
+  $('tabbar').style.display = 'none';
+  if (!d) { $('content').innerHTML = '<div class="pad">商品不存在</div>'; return; }
+  const rate = 0.1;
+  const fee = Math.round(d.price * rate * 100) / 100;
+  const sellerGet = Math.round((d.price - fee) * 100) / 100;
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="banner">支付前请确认价格、交付方式与退款说明。支付成功只处理一次有效回调（演示）。</div>
+      <div class="card pad">
+        <b>${d.title}</b>
+        <div class="muted" style="font-size:12px;margin-top:6px">${d.course} · ${d.version || 'v1'} · ${d.seller}</div>
+        <div class="price" style="margin-top:10px;font-size:22px">¥${d.price}</div>
+      </div>
+      <div class="card pad stack" style="gap:8px;font-size:13px">
+        <div class="row space"><span>商品金额</span><b>¥${d.price}</b></div>
+        <div class="row space"><span>平台服务费（展示）</span><span class="muted">¥${fee}（${Math.round(rate*100)}%）</span></div>
+        <div class="row space"><span>卖家待结算（示意）</span><span class="muted">¥${sellerGet}</span></div>
+        <div class="row space"><span>交付方式</span><b>自动交付</b></div>
+      </div>
+      <div class="card pad">
+        <b>退款与合规</b>
+        <div class="muted" style="margin-top:8px;font-size:12px;line-height:1.55">${d.refund || '未下载可申请退款'}。已交付内容按规则处理，不使用笼统的「一经售出概不退款」替代说明。</div>
+      </div>
+      <label class="row" style="font-size:12px;gap:8px"><input type="checkbox" id="payAgree" checked style="width:auto" /> 已阅读交付与退款说明</label>
+      <button class="btn block" id="doPay">确认支付 ¥${d.price}</button>
+      <button class="btn ghost block" onclick="back()">返回修改</button>
+    </div>`;
+  $('doPay').onclick = () => {
+    if (!$('payAgree').checked) { toast('请先确认须知'); return; }
+    const order = {
+      id: 'o_' + Date.now(), goodsId: d.id, title: d.title, price: d.price,
+      status: '已交付', time: '刚刚', version: d.version || 'v1', role: 'buyer',
+      deliverAt: '刚刚', downloads: 0, downloadLog: [], viewer: true,
+      campus: d.campus || M.me.campus, payOnce: true
+    };
+    M.digitalOrders = M.digitalOrders || [];
+    // idempotent demo: avoid double order same second spam only
+    M.digitalOrders.unshift(order);
+    d.sales = (d.sales || 0) + 1;
+    state.currentOrderId = order.id;
+    state.payOrderId = order.id;
+    go('digital-pay-success');
+  };
+}
+function pageDigitalPaySuccess(){
+  const o = (M.digitalOrders || []).find(x => x.id === state.payOrderId || x.id === state.currentOrderId) || (M.digitalOrders || []).find(x => x.role==='buyer');
+  navBar('支付结果', { back: true });
+  $('tabbar').style.display = 'none';
+  $('content').innerHTML = `
+    <div class="pad stack" style="padding-top:28px;text-align:center">
+      <div style="width:64px;height:64px;border-radius:50%;margin:0 auto;background:linear-gradient(145deg,#1F8A6F,#146B56);color:#fff;display:grid;place-items:center;font-size:28px">✓</div>
+      <h2 style="margin:16px 0 6px">支付成功，已自动交付</h2>
+      <div class="muted" style="font-size:13px;line-height:1.6">${o ? o.title : '数字商品'}<br/>版本 ${o ? (o.version||'') : ''} · 订单 ${o ? o.id : ''}</div>
+      <div class="card pad" style="text-align:left;margin-top:8px">
+        <div class="muted" style="font-size:12px;line-height:1.6">
+          · 已生成可审计交付记录<br/>
+          · 支持在线查看（含水印）与短时下载链接<br/>
+          · 原文件无永久公开地址
+        </div>
+      </div>
+      <button class="btn block" onclick="go('digital-owned')">查看已购内容</button>
+      <button class="btn ghost block" onclick="go('digital')">继续逛商店</button>
+    </div>`;
+}
+function pageDigitalOwned(){
+  const orders = (M.digitalOrders || []).filter(o => o.role === 'buyer');
+  const cur = orders.find(o => o.id === state.currentOrderId) || orders[0];
+  navBar('已购内容', { back: true, right: '商店', onRight: () => { state.digitalBuyerTab='shop'; go('digital'); } });
+  $('tabbar').style.display = 'none';
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="banner">买家图书馆：在线查看 / 限次下载 / 版本更新 / 退款与侵权投诉。</div>
+      ${orders.length ? orders.map(o => `
+        <div class="card pad">
+          <div class="row space">
+            <b>${o.title}</b>
+            <span class="chip ${o.status==='已交付'?'':(o.status==='退款中'?'orange':'gray')}">${o.status}</span>
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:6px">¥${o.price} · ${o.version||''} · 下单 ${o.time||''}${o.deliverAt ? ' · 交付 ' + o.deliverAt : ''}</div>
+          <div class="muted" style="font-size:11px;margin-top:4px">下载次数 ${o.downloads||0} · 订单号 ${o.id}${o.refundReason ? ' · 退款原因：' + o.refundReason : ''}</div>
+          ${(o.downloadLog&&o.downloadLog.length) ? `<div class="muted" style="font-size:11px;margin-top:4px">下载记录：${o.downloadLog.slice(0,2).join('；')}</div>` : ''}
+          <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+            <button class="btn sm" data-open="${o.id}">在线查看</button>
+            <button class="btn ghost sm" data-dl="${o.id}">下载</button>
+            <button class="btn ghost sm" data-ver="${o.id}">版本更新</button>
+            <button class="btn ghost sm" data-refund="${o.id}">申请退款</button>
+            <button class="btn ghost sm" onclick="go('report')">投诉侵权</button>
+          </div>
+          <div class="source" id="view-${o.id}" style="display:none;margin-top:10px">
+            <b>在线阅读（演示水印：订单 ${o.id} / ${M.me.name}）</b>
+            <div style="margin-top:8px;font-size:13px;line-height:1.6">这里是已购资料正文预览区。正式环境按订单鉴权打开，禁止外链直下。</div>
+          </div>
+        </div>`).join('') : `<div class="card pad"><div class="muted">还没有已购内容</div><button class="btn" style="margin-top:10px" onclick="go('digital')">去购买</button></div>`}
+    </div>`;
+  $('content').querySelectorAll('[data-open]').forEach(b => b.onclick = () => {
+    const box = document.getElementById('view-' + b.dataset.open);
+    if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  });
+  $('content').querySelectorAll('[data-dl]').forEach(b => b.onclick = () => {
+    const o = (M.digitalOrders||[]).find(x => x.id === b.dataset.dl);
+    if (!o) return;
+    if (o.status === '已退款') { toast('权限已撤销，无法下载'); return; }
+    o.downloads = (o.downloads||0) + 1;
+    o.downloadLog = o.downloadLog || [];
+    o.downloadLog.unshift('刚刚 · 10 分钟短时链接');
+    toast('已生成 10 分钟短时下载链接');
+    pageDigitalOwned();
+  });
+  $('content').querySelectorAll('[data-ver]').forEach(b => b.onclick = () => toast('当前已是最新版本；卖家更新后会推送通知'));
+  $('content').querySelectorAll('[data-refund]').forEach(b => b.onclick = () => {
+    const o = (M.digitalOrders||[]).find(x => x.id === b.dataset.refund);
+    if (!o) return;
+    if (o.status === '退款中' || o.status === '已退款') { toast('该订单已在退款流程'); return; }
+    const reason = prompt('选择退款原因（演示）', '未下载 / 文件损坏 / 内容与描述明显不符 / 重复扣款') || '未下载';
+    o.status = '退款中';
+    o.refundReason = reason;
+    toast('退款申请已提交');
+    pageDigitalOwned();
+  });
+}
+
+function pageSellerApply(){
+  navBar('认证卖家申请', { back: true });
+  $('tabbar').style.display = 'none';
+  const st = (M.seller && M.seller.status) || 'none';
+  if (st === 'approved') {
+    $('content').innerHTML = `<div class="pad stack"><div class="banner">你已是认证卖家</div><button class="btn block" onclick="go('seller-center')">进入卖家中心</button></div>`;
+    return;
+  }
+  if (st === 'pending') {
+    $('content').innerHTML = `<div class="pad stack">
+      <div class="banner">申请审核中。通过前不可发布数字商品。</div>
+      <button class="btn block" id="mockPass">演示：模拟审核通过</button>
+    </div>`;
+    $('mockPass').onclick = () => { M.seller.status = 'approved'; toast('审核通过'); go('seller-center'); };
+    return;
+  }
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="banner">登录用户可申请认证卖家。需提交联系人、销售内容、收款结算信息，并同意数字商品 / 知识产权 / 退款规则。</div>
+      <label class="muted" style="font-size:12px">联系人</label>
+      <input class="input" id="sContact" value="${M.me.name}" />
+      <label class="muted" style="font-size:12px">销售内容说明</label>
+      <textarea id="sContent">原创复习笔记、课程解析与自制题集（有权处分）</textarea>
+      <label class="muted" style="font-size:12px">收款与结算信息</label>
+      <input class="input" id="sPay" value="微信商户（演示）" />
+      <label class="row" style="font-size:12px;gap:8px"><input type="checkbox" id="sAgree" checked style="width:auto" /> 同意数字商品、知识产权与退款规则</label>
+      <div class="card pad" style="font-size:12px;line-height:1.55"><b>禁止销售</b><div class="muted" style="margin-top:6px">未公开试题、盗版资料、代写代考、作弊服务、含隐私内容等。</div></div>
+      <button class="btn block" id="sSubmit">提交申请</button>
+    </div>`;
+  $('sSubmit').onclick = () => {
+    if (!$('sAgree').checked) { toast('请先同意规则'); return; }
+    M.seller = M.seller || {};
+    M.seller.status = 'pending';
+    M.seller.contact = $('sContact').value;
+    M.seller.content = $('sContent').value;
+    M.seller.payout = $('sPay').value;
+    toast('已提交，等待审核');
+    go('seller-apply');
+  };
+}
+function pageSellerCenter(){
+  navBar('卖家中心', { back: true });
+  $('tabbar').style.display = 'none';
+  if (!M.seller || M.seller.status !== 'approved') { go('seller-apply'); return; }
+  const tab = state.sellerTab || 'goods';
+  const myGoods = (M.digitalGoods || []).filter(d => d.sellerId === 'u_me' || (d.seller || '').indexOf(M.me.name) >= 0);
+  const feePct = Math.round(((M.seller.feeRate || 0.1) * 100));
+  let body = '';
+  if (tab === 'goods') {
+    body = `<div class="stack">${myGoods.length ? myGoods.map(d => `
+      <div class="card pad">
+        <div class="row space"><b>${d.title}</b><span class="chip">${d.status || '在售'}</span></div>
+        <div class="muted" style="font-size:12px;margin-top:6px">¥${d.price} · ${d.course} · 销量 ${d.sales}</div>
+        <div class="row" style="margin-top:8px;gap:8px">
+          <button class="btn ghost sm" onclick="toast('演示：已下架')">下架</button>
+          <button class="btn ghost sm" onclick="toast('演示：已通知已购用户版本更新')">发版本更新</button>
+        </div>
+      </div>`).join('') : '<div class="muted">还没有数字商品</div>'}
+      <button class="btn block" id="newDigital">上架数字商品</button></div>`;
+  } else if (tab === 'orders') {
+    body = `<div class="stack">${(M.digitalOrders || []).map(o => `
+      <div class="card pad">
+        <div class="row space"><b>${o.title}</b><span class="chip gray">${o.status}</span></div>
+        <div class="muted" style="font-size:12px;margin-top:6px">¥${o.price} · ${o.time} · ${o.role === 'buyer' ? '我买的' : '销售相关'}</div>
+      </div>`).join('')}</div>`;
+  } else {
+    body = `<div class="stack">
+      <div class="card pad"><div class="muted" style="font-size:12px">待结算</div><b style="font-size:24px">¥${M.seller.pendingSettle || 0}</b><div class="muted" style="font-size:11px;margin-top:6px">观察期后可结算；退款将冲回</div></div>
+      <div class="card pad"><div class="muted" style="font-size:12px">已结算</div><b style="font-size:24px">¥${M.seller.settled || 0}</b></div>
+      <div class="card pad" style="font-size:13px;line-height:1.55">平台服务费 <b>${feePct}%</b> · 累计销售 ${M.seller.salesCount || 0} 单<br/><span class="muted">上架前已展示抽成与结算规则（演示）</span></div>
+      <button class="btn ghost block" onclick="toast('演示：已发起结算申请')">申请结算</button>
+    </div>`;
+  }
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="card pad row" style="gap:10px">
+        <div class="avatar">卖</div>
+        <div class="grow"><b>认证卖家 · ${M.me.name}</b><div class="muted" style="font-size:12px;margin-top:4px">${M.seller.content || '数字商品销售'}</div></div>
+        <span class="chip">已认证</span>
+      </div>
+      <div class="row" style="gap:8px">
+        <button class="btn ${tab==='goods'?'':'ghost'} sm" data-st="goods">商品</button>
+        <button class="btn ${tab==='orders'?'':'ghost'} sm" data-st="orders">订单</button>
+        <button class="btn ${tab==='settle'?'':'ghost'} sm" data-st="settle">结算</button>
+      </div>
+      ${body}
+      <button class="btn ghost block" onclick="go('digital')">浏览数字商品频道</button>
+    </div>`;
+  $('content').querySelectorAll('[data-st]').forEach(b => b.onclick = () => { state.sellerTab = b.dataset.st; pageSellerCenter(); });
+  const nd = $('newDigital'); if (nd) nd.onclick = () => go('digital-publish');
+}
+function pageDigitalPublish(){
+  navBar('上架数字商品', { back: true });
+  $('tabbar').style.display = 'none';
+  if (!M.seller || M.seller.status !== 'approved') {
+    $('content').innerHTML = `<div class="pad stack"><div class="banner">未经认证卖家审核，不得发布数字商品。</div><button class="btn block" onclick="go('seller-apply')">去申请认证卖家</button></div>`;
+    return;
+  }
+  const feePct = Math.round(((M.seller.feeRate || 0.1) * 100));
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="banner">需填写预览、价格、授权说明与适用范围；通过内容与权利审核后上架。</div>
+      <input class="input" id="dgTitle" placeholder="标题" value="线性代数考点速记" />
+      <input class="input" id="dgCourse" placeholder="适用课程" value="线性代数" />
+      <input class="input" id="dgYear" placeholder="适用年份" value="2025-2026" />
+      <input class="input" id="dgPrice" placeholder="价格" value="8.8" />
+      <textarea id="dgPreview">本人整理考点卡片，附 2 页样张；非未公开试题。</textarea>
+      <textarea id="dgRights">原创整理，卖家拥有处分权</textarea>
+      <label class="row" style="font-size:12px;gap:8px"><input type="checkbox" id="dgRule" checked style="width:auto" /> 确认不含盗版 / 未公开试题 / 作弊服务</label>
+      <div class="muted" style="font-size:11px">平台服务费 ${feePct}% ，上架前已展示</div>
+      <button class="btn block" id="dgSubmit">提交审核</button>
+    </div>`;
+  $('dgSubmit').onclick = () => {
+    if (!$('dgRule').checked) { toast('请确认合规承诺'); return; }
+    const item = {
+      id: 'd_' + Date.now(), title: $('dgTitle').value || '未命名资料',
+      price: parseFloat($('dgPrice').value || '0') || 0,
+      course: $('dgCourse').value || '—', year: $('dgYear').value || '—', sales: 0,
+      seller: '认证卖家 · ' + M.me.name, sellerId: 'u_me',
+      preview: $('dgPreview').value, version: 'v1', pages: 10, size: '1.0 MB',
+      rights: $('dgRights').value, refund: '未下载可申请退款',
+      status: '审核中', updates: true, campus: M.me.campus
+    };
+    M.digitalGoods.unshift(item);
+    M.digitalOrders.unshift({ id: 'o_s_' + Date.now(), goodsId: item.id, title: item.title, price: item.price, status: '待审核上架', time: '刚刚', version: 'v1', role: 'seller' });
+    toast('已提交审核');
+    state.sellerTab = 'goods';
+    go('seller-center');
+  };
 }
 
 function pageMessages(){
@@ -1113,12 +1766,23 @@ function pageChat(){
   $('tabbar').style.display='none';
   $('content').innerHTML = `
     <div class="pad stack">
-      <div class="banner">私信仅限本校实例。首次联系可进入消息请求；不展示真实手机号。</div>
-      ${c.request ? `<div class="card pad"><b>陌生人消息请求</b><div class="muted" style="font-size:12px;margin-top:6px">对方想咨询商品，是否接受？</div>
-        <div class="row" style="margin-top:10px;gap:8px"><button class="btn sm" onclick="toast('已接受')">接受</button><button class="btn ghost sm" onclick="toast('已拒绝')">拒绝</button></div></div>`
-      : `<div class="msg-ai">你好，耳机还在吗？</div>
-           <div class="msg-user">在的，成色如图，今晚主楼当面看？</div>
+      <div class="banner">私信仅限本校实例。不展示真实手机号。</div>
+      ${c.source ? `<div class="card pad" style="background:var(--soft)"><span class="chip">会话来源</span><div style="margin-top:6px;font-size:13px">${c.source}</div></div>` : ''}
+      ${c.request ? `<div class="card pad"><b>陌生人消息请求</b><div class="muted" style="font-size:12px;margin-top:6px">对方想咨询，是否接受？</div>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+          <button class="btn sm" onclick="toast('已接受')">接受</button>
+          <button class="btn ghost sm" onclick="toast('已拒绝')">拒绝</button>
+          <button class="btn ghost sm" onclick="toast('已屏蔽')">屏蔽</button>
+          <button class="btn ghost sm" onclick="go('report')">举报</button>
+        </div></div>`
+      : `<div class="msg-ai">你好，在吗？</div>
+           <div class="msg-user">在的</div>
            <div class="msg-ai">${c.last}</div>`}
+      <div class="row" style="gap:8px">
+        <button class="btn ghost sm" onclick="toast('已撤回')">撤回</button>
+        <button class="btn ghost sm" onclick="toast('已屏蔽')">屏蔽</button>
+        <button class="btn ghost sm" onclick="go('report')">举报</button>
+      </div>
     </div>
     <div style="position:sticky;bottom:0;background:#fff;padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px">
       <input class="input" placeholder="输入消息" />
@@ -1128,6 +1792,10 @@ function pageChat(){
 
 function pageMe(){
   navBar('我的');
+  const sellerStatus = (M.seller && M.seller.status) || 'none';
+  const sellerLabel = sellerStatus === 'approved' ? '卖家中心' : (sellerStatus === 'pending' ? '认证审核中' : '申请认证卖家');
+  const sellerGo = sellerStatus === 'approved' ? 'seller-center' : 'seller-apply';
+  const orgLabel = M.me.orgStatus === 'approved' ? ('组织 · ' + (M.me.orgName||'已认证')) : (M.me.orgStatus === 'pending' ? '组织审核中' : '申请组织身份');
   $('content').innerHTML = `
     <div class="pad stack">
       <div class="card pad row" style="gap:12px">
@@ -1135,18 +1803,186 @@ function pageMe(){
         <div class="grow">
           <b style="font-size:18px">${M.me.name}</b>
           <div class="muted" style="font-size:12px;margin-top:4px">${M.me.major}</div>
-          <div class="chip" style="margin-top:8px">${M.me.campus}</div>
+          <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">
+            <span class="chip">${M.me.campus}</span>
+            ${sellerStatus==='approved'?'<span class="chip">认证卖家</span>':''}
+            ${M.me.orgStatus==='approved'?'<span class="chip orange">组织负责人</span>':''}
+          </div>
         </div>
       </div>
-      <div class="banner">不展示学籍/学校官方认证。账号可信度基于平台行为，不等于身份保证。</div>
+      <div class="banner">不展示学籍/学校官方认证。可信度不等于身份保证。</div>
       <div class="card pad">
-        <div class="list-item"><b>账号可信度</b><div class="muted" style="font-size:12px;margin-top:4px">${M.me.trust}</div></div>
+        <div class="list-item" onclick="go('trust')" style="cursor:pointer"><b>账号可信度</b><div class="muted" style="font-size:12px;margin-top:4px">${M.me.trust}</div></div>
+        <div class="list-item" onclick="go('search')" style="cursor:pointer"><b>搜索</b></div>
+        <div class="list-item" onclick="go('favorites')" style="cursor:pointer"><b>我的收藏</b></div>
         <div class="list-item" onclick="go('square')" style="cursor:pointer"><b>我的发布</b></div>
-        <div class="list-item" onclick="go('market')" style="cursor:pointer"><b>我的闲置 / 订单</b></div>
+        <div class="list-item" onclick="go('market')" style="cursor:pointer"><b>我的闲置</b></div>
+        <div class="list-item" onclick="go('used-publish')" style="cursor:pointer"><b>发布闲置</b></div>
+        <div class="list-item" onclick="go('digital')" style="cursor:pointer"><b>数字商品商店</b><div class="muted" style="font-size:11px;margin-top:4px">浏览 / 下单 / 自动交付</div></div>
+        <div class="list-item" onclick="go('digital-owned')" style="cursor:pointer"><b>已购内容 / 订单</b><div class="muted" style="font-size:11px;margin-top:4px">查看 · 下载 · 退款</div></div>
+        <div class="list-item" onclick="go('${sellerGo}')" style="cursor:pointer"><b>${sellerLabel}</b><div class="muted" style="font-size:11px;margin-top:4px">上架 / 订单 / 结算</div></div>
         <div class="list-item" onclick="go('activities')" style="cursor:pointer"><b>我的活动</b></div>
+        <div class="list-item" onclick="go('org-apply')" style="cursor:pointer"><b>${orgLabel}</b></div>
+        <div class="list-item" onclick="go('promo-wallet')" style="cursor:pointer"><b>推广账户</b></div>
+        <div class="list-item" onclick="go('settings')" style="cursor:pointer"><b>设置 / 隐私</b></div>
         <div class="list-item" style="cursor:pointer" onclick="location.href='../school-admin/app.html'"><b>管理入口（演示）</b><div class="muted" style="font-size:11px;margin-top:4px">完整审核请用学校管理 Web</div></div>
       </div>
     </div>`;
+}
+
+function pageSearch(){
+  navBar('搜索', { back: true });
+  $('tabbar').style.display = 'none';
+  const q = state.searchQ || '';
+  const ql = q.trim();
+  const posts = ql ? M.posts.filter(p => p.content.includes(ql) || p.author.includes(ql)) : M.posts.slice(0,3);
+  const acts = ql ? M.activities.filter(a => a.title.includes(ql) || a.tag.includes(ql)) : M.activities.slice(0,2);
+  const goods = ql ? M.usedGoods.filter(g => g.title.includes(ql)) : M.usedGoods.slice(0,2);
+  const dig = ql ? M.digitalGoods.filter(d => d.title.includes(ql) || d.course.includes(ql)) : M.digitalGoods.filter(d=>d.status==='在售').slice(0,2);
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="row" style="gap:8px"><input class="input" id="sq" placeholder="搜广场 / 活动 / 闲置 / 数字商品" value="${q}" /><button class="btn sm" id="sgo">搜索</button></div>
+      <div class="banner">AI 提问与站内搜索分离：这里只搜内容，不走问答。</div>
+      <h3 class="section-title">广场</h3>
+      ${posts.map(p=>`<div class="card pad" style="cursor:pointer" onclick="openPost('${p.id}')"><b style="font-size:13px">${p.author}</b><div style="margin-top:6px;font-size:13px">${p.content}</div></div>`).join('') || '<div class="muted">无结果 · 可去问 AI 或发帖</div>'}
+      <h3 class="section-title">活动</h3>
+      ${acts.map(a=>`<div class="card pad" style="cursor:pointer" onclick="openActivity('${a.id}')"><b>${a.title}</b><div class="muted" style="font-size:12px;margin-top:4px">${a.time}</div></div>`).join('') || '<div class="muted">无结果</div>'}
+      <h3 class="section-title">个人闲置</h3>
+      ${goods.map(g=>`<div class="card pad" style="cursor:pointer" onclick="openGoods('${g.id}')"><b>${g.title}</b> <span class="price">¥${g.price}</span></div>`).join('') || '<div class="muted">无结果</div>'}
+      <h3 class="section-title">数字商品</h3>
+      ${dig.map(d=>`<div class="card pad" style="cursor:pointer" onclick="openDigital('${d.id}')"><b>${d.title}</b> <span class="price">¥${d.price}</span></div>`).join('') || '<div class="muted">无结果</div>'}
+      ${ql && !posts.length && !acts.length && !goods.length && !dig.length ? '<button class="btn block" onclick="askAI(state.searchQ)">无结果，改为问 AI</button><button class="btn ghost block" onclick="go(\'compose\')">发布内容</button>' : ''}
+    </div>`;
+  $('sgo').onclick = () => { state.searchQ = $('sq').value.trim(); pageSearch(); };
+}
+function pageTrust(){
+  navBar('账号可信度', { back: true });
+  $('tabbar').style.display='none';
+  const d = M.me.trustDetail || {};
+  $('content').innerHTML = `<div class="pad stack">
+    <div class="banner">可信度基于平台行为，不代表真实学生身份或交易担保。</div>
+    <div class="card pad stack" style="gap:10px;font-size:13px">
+      <div class="row space"><span>绑定状态</span><b>${d.bind||'—'}</b></div>
+      <div class="row space"><span>注册天数</span><b>${d.days||'—'} 天</b></div>
+      <div class="row space"><span>发帖数</span><b>${d.posts||0}</b></div>
+      <div class="row space"><span>完成交易</span><b>${d.trades||0}</b></div>
+      <div class="row space"><span>公开投诉</span><b>${d.complains||0}</b></div>
+      <div class="row space"><span>风险等级</span><b>${d.risk||'—'}</b></div>
+    </div>
+    <div class="muted" style="font-size:12px">${M.me.trust}</div>
+  </div>`;
+}
+function pageReport(){
+  navBar('举报', { back: true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `<div class="pad stack">
+    <div class="banner">可举报帖子、评论、商品、私信和 AI 回答。紧急人身安全请联系保卫处/公共紧急电话。</div>
+    <label class="muted" style="font-size:12px">类型</label>
+    <select><option>帖子</option><option>评论</option><option>闲置商品</option><option>数字商品</option><option>私信</option><option>活动</option><option>AI 回答</option></select>
+    <label class="muted" style="font-size:12px">原因</label>
+    <select><option>人身攻击</option><option>隐私泄露</option><option>虚假交易</option><option>盗版/未公开试题</option><option>骚扰广告</option><option>其他</option></select>
+    <textarea placeholder="补充说明（可选）"></textarea>
+    <button class="btn block" onclick="toast('举报已提交，等待处理'); back();">提交举报</button>
+  </div>`;
+}
+function pageOrgApply(){
+  navBar('组织身份申请', { back: true });
+  $('tabbar').style.display='none';
+  if (M.me.orgStatus === 'approved') {
+    $('content').innerHTML = `<div class="pad stack"><div class="banner">已通过：${M.me.orgName||'组织负责人'}</div><button class="btn block" onclick="go('activity-publish')">去发布活动</button><button class="btn ghost block" onclick="go('promo-wallet')">推广账户</button></div>`;
+    return;
+  }
+  if (M.me.orgStatus === 'pending') {
+    $('content').innerHTML = `<div class="pad stack"><div class="banner">组织身份审核中</div><button class="btn block" onclick="M.me.orgStatus='approved'; M.me.orgName='光影社'; toast('演示通过'); go('org-apply');">演示：审核通过</button></div>`;
+    return;
+  }
+  $('content').innerHTML = `<div class="pad stack">
+    <div class="banner">组织身份是附加身份。非官方社团/临时小组可申请，但不得冒用校级官方表述。</div>
+    <input class="input" id="orgName" placeholder="组织名称" value="光影社" />
+    <input class="input" placeholder="负责人" value="${M.me.name}" />
+    <input class="input" placeholder="联系方式" value="平台内私信" />
+    <textarea placeholder="组织介绍与可验证活动记录">校园摄影社团，曾组织 3 次外拍</textarea>
+    <button class="btn block" id="orgSub">提交申请</button>
+  </div>`;
+  $('orgSub').onclick = () => { M.me.orgStatus='pending'; M.me.orgName=$('orgName').value; toast('已提交'); go('org-apply'); };
+}
+function pageActivityPublish(){
+  navBar('发布活动', { back: true });
+  $('tabbar').style.display='none';
+  if (M.me.orgStatus !== 'approved') {
+    $('content').innerHTML = `<div class="pad stack"><div class="banner">需先完成组织身份认证</div><button class="btn block" onclick="go('org-apply')">去申请</button></div>`;
+    return;
+  }
+  $('content').innerHTML = `<div class="pad stack">
+    <div class="banner">活动需审核。付费推广另购，且必须标注「推广」。</div>
+    <input class="input" id="at" value="周末胶片暗房体验" />
+    <input class="input" value="${M.me.orgName||'组织'}" />
+    <input class="input" value="本周日 14:00" />
+    <input class="input" value="长安校区活动中心" />
+    <textarea>面向摄影爱好者，限 20 人，免费。</textarea>
+    <label class="row" style="font-size:12px;gap:8px"><input type="checkbox" id="ap" style="width:auto" /> 同时申请付费推广</label>
+    <button class="btn block" id="as">提交审核</button>
+  </div>`;
+  $('as').onclick = () => { toast($('ap').checked ? '已提交活动+推广审核' : '活动已提交审核'); go('activities'); };
+}
+function pagePromoWallet(){
+  navBar('推广账户', { back: true });
+  $('tabbar').style.display='none';
+  const w = M.promoWallet || { balance:0, records:[] };
+  $('content').innerHTML = `<div class="pad stack">
+    <div class="card pad"><div class="muted" style="font-size:12px">可用余额（仅本校推广）</div><b style="font-size:28px">¥${w.balance}</b></div>
+    <div class="banner">充值余额不可跨校、不可转让。付费只影响曝光，不代表平台/学校认可。</div>
+    <button class="btn block" onclick="toast('演示：充值成功'); M.promoWallet.balance+=100; pagePromoWallet();">充值 100 元</button>
+    <h3 class="section-title">流水</h3>
+    ${(w.records||[]).map(r=>`<div class="card pad row space"><div><b style="font-size:13px">${r.title}</b><div class="muted" style="font-size:11px">${r.time}</div></div><b>${r.amount}</b></div>`).join('')}
+  </div>`;
+}
+function pageUsedPublish(){
+  navBar('发布闲置', { back: true });
+  $('tabbar').style.display='none';
+  const draft = state.usedDraft || {};
+  $('content').innerHTML = `<div class="pad stack">
+    <div class="banner">个人闲置仅信息撮合，不经手资金。请当面验货，谨慎提前转账。</div>
+    <input class="input" id="ut" placeholder="标题" value="${draft.title||'线性代数教材'}" />
+    <input class="input" id="up" placeholder="价格" value="15" />
+    <select id="uc"><option>教材</option><option>数码</option><option>日用</option><option>其他</option></select>
+    <select><option>${M.me.campus}</option>${(M.school.campuses||[]).filter(c=>c!==M.me.campus).map(c=>`<option>${c}</option>`).join('')}</select>
+    <input class="input" placeholder="成色" value="8 成新" />
+    <textarea placeholder="描述">可议价，建议图书馆当面交易</textarea>
+    <button class="btn block" id="us">发布</button>
+  </div>`;
+  $('us').onclick = () => {
+    M.usedGoods.unshift({ id:'g_'+Date.now(), title:$('ut').value, price:parseFloat($('up').value)||0, campus:M.me.campus, degree:'8 成新', seller:M.me.name, trust:M.me.trust, img:'📦', status:'在售', category:$('uc').value });
+    toast('已发布闲置'); go('market');
+  };
+}
+function pageFavorites(){
+  navBar('我的收藏', { back: true });
+  $('tabbar').style.display='none';
+  const f = M.me.favorites || { posts:[], goods:[], activities:[], digital:[] };
+  const posts = M.posts.filter(p=>f.posts.includes(p.id));
+  const goods = M.usedGoods.filter(g=>f.goods.includes(g.id));
+  const acts = M.activities.filter(a=>f.activities.includes(a.id));
+  const dig = M.digitalGoods.filter(d=>f.digital.includes(d.id));
+  $('content').innerHTML = `<div class="pad stack">
+    <h3 class="section-title">帖子</h3>${posts.map(p=>`<div class="card pad" onclick="openPost('${p.id}')" style="cursor:pointer">${p.content}</div>`).join('')||'<div class="muted">暂无</div>'}
+    <h3 class="section-title">闲置</h3>${goods.map(g=>`<div class="card pad" onclick="openGoods('${g.id}')" style="cursor:pointer">${g.title} · ¥${g.price}</div>`).join('')||'<div class="muted">暂无</div>'}
+    <h3 class="section-title">活动</h3>${acts.map(a=>`<div class="card pad" onclick="openActivity('${a.id}')" style="cursor:pointer">${a.title}</div>`).join('')||'<div class="muted">暂无</div>'}
+    <h3 class="section-title">数字商品</h3>${dig.map(d=>`<div class="card pad" onclick="openDigital('${d.id}')" style="cursor:pointer">${d.title}</div>`).join('')||'<div class="muted">暂无</div>'}
+  </div>`;
+}
+function pageSettings(){
+  navBar('设置', { back: true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `<div class="pad stack">
+    <div class="card pad">
+      <div class="list-item"><b>隐私设置</b><div class="muted" style="font-size:12px;margin-top:4px">联系方式默认隐藏</div></div>
+      <div class="list-item"><b>推广弹窗</b><div class="muted" style="font-size:12px;margin-top:4px">可关闭首页推广弹窗</div></div>
+      <div class="list-item" onclick="toast('举报记录：3 条')" style="cursor:pointer"><b>举报记录</b></div>
+      <div class="list-item" onclick="toast('演示：账号注销流程')" style="cursor:pointer"><b>账号注销</b></div>
+    </div>
+    <button class="btn ghost block" onclick="go('login', true)">退出登录（演示）</button>
+  </div>`;
 }
 
 function pageCompose(){
@@ -1176,10 +2012,26 @@ function render(){
     market: pageMarket,
     goods: pageGoods,
     digital: pageDigital,
+    'digital-detail': pageDigitalDetail,
+    'digital-checkout': pageDigitalCheckout,
+    'digital-pay-success': pageDigitalPaySuccess,
+    'digital-owned': pageDigitalOwned,
+    'digital-publish': pageDigitalPublish,
+    'seller-apply': pageSellerApply,
+    'seller-center': pageSellerCenter,
     messages: pageMessages,
     chat: pageChat,
     me: pageMe,
     compose: pageCompose,
+    search: pageSearch,
+    trust: pageTrust,
+    report: pageReport,
+    'org-apply': pageOrgApply,
+    'activity-publish': pageActivityPublish,
+    'promo-wallet': pagePromoWallet,
+    'used-publish': pageUsedPublish,
+    favorites: pageFavorites,
+    settings: pageSettings,
   };
   (map[state.screen] || pageHome)();
   if (!showTabbar() && !['home','square','messages','me'].includes(state.screen)) {
