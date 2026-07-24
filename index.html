@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 校园通 · UI 原型总入口</title>
+<link rel="stylesheet" href="./assets/admin.css" />
+<style>
+  body {
+    background:
+      radial-gradient(900px 420px at 0% -10%, #d8efe7 0%, transparent 55%),
+      radial-gradient(700px 360px at 100% 0%, #e5eef8 0%, transparent 50%),
+      #eef2f0;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 20px 60px; }
+  .hero { margin-bottom: 22px; }
+  .hero h1 { margin: 0 0 8px; font-size: 28px; }
+  .hero p { margin: 0; color: var(--muted); line-height: 1.6; max-width: 720px; }
+  .cards { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+  .entry {
+    background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px;
+    box-shadow: var(--shadow); display: grid; gap: 10px; min-height: 240px;
+  }
+  .entry h2 { margin: 0; font-size: 18px; }
+  .entry p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+  .entry ul { margin: 0; padding-left: 18px; color: #334; font-size: 13px; line-height: 1.55; }
+  .entry .foot { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .note { margin-top: 18px; }
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="chip">可点击 HTML 原型 · 演示数据</div>
+      <h1>AI 校园通 · 三端原型入口</h1>
+      <p>按 PRD 与原型要求：用户端为微信小程序主路径；学校管理端为 Web 业务闭环；平台控制台为多校实例开通概念页。演示学校默认「西安邮电大学」，前台无学校切换。</p>
+    </div>
+    <div class="cards">
+      <section class="entry">
+        <div class="chip">用户端 · 390 小程序</div>
+        <h2>微信小程序</h2>
+        <p>AI 问答三态、广场顶部失物、闲置私信、活动推广、我的可信度。</p>
+        <ul>
+          <li>专属入口登录（锁定西安邮电大学）</li>
+          <li>AI 有答案 / 无答案转帖 / 路由闲置</li>
+          <li>管理员已整理态可见</li>
+        </ul>
+        <div class="foot">
+          <a class="btn" href="./mini/app.html">打开用户端</a>
+        </div>
+      </section>
+      <section class="entry">
+        <div class="chip">学校管理 · 1440 Web</div>
+        <h2>学校管理后台</h2>
+        <p>仅本学校实例：待整理求助、候选知识、内容治理、校区共享。</p>
+        <ul>
+          <li>求助整理 → 用户端「已整理」</li>
+          <li>候选知识审核</li>
+          <li>举报处理 / 校区共享配置</li>
+        </ul>
+        <div class="foot">
+          <a class="btn" href="./school-admin/app.html">打开学校管理</a>
+        </div>
+      </section>
+      <section class="entry">
+        <div class="chip blue">平台控制台 · Web</div>
+        <h2>平台控制台</h2>
+        <p>总部权限：开通学校实例、入口形态、版本与运行状态。默认不看业务正文。</p>
+        <ul>
+          <li>学校实例列表（3 校）</li>
+          <li>开通实例流程</li>
+          <li>版本/运行状态概念页</li>
+        </ul>
+        <div class="foot">
+          <a class="btn blue" href="./platform-console/app.html">打开控制台</a>
+        </div>
+      </section>
+    </div>
+    <div class="card pad note">
+      <b>演示故事线（建议顺序）</b>
+      <div class="muted" style="margin-top:8px;line-height:1.6;font-size:13px">
+        1) 用户端登录西安邮电大学 → 问「图书馆几点关门」→ 官方资料；2) 问课程作业体验 → 无答案草稿发帖；
+        3) 学校管理整理该帖 → 回用户端看「管理员已整理」；4) 问「想收四六级耳机」→ 闲置列表 → 私信；
+        5) 控制台查看/开通学校实例。演示数据见 <code>assets/mock.js</code>。
+      </div>
+      <div class="links" style="margin-top:12px">
+        <a href="./10-客户端与管理端形态及UI原型要求.md">形态与原型要求</a>
+        <a href="./2026-07-24-ui-prototype.md">实施计划</a>
+        <a href="../docs/prd/README.md">PRD 索引</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

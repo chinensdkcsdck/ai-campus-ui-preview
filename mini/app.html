@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>AI 校园通 · 小程序原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
+<script src="../assets/mock.js"></script>
+<style>
+  :root {
+    --theme: #146B56;
+    --theme-2: #1F8A6F;
+    --theme-deep: #0B3D32;
+    --soft: #E4F4EE;
+    --soft-2: #F3EFE6;
+    --bg: #F3F1EB;
+    --card: #FFFcf8;
+    --text: #15241F;
+    --muted: #5F6F69;
+    --line: #E3E7E2;
+    --danger: #C24B3D;
+    --warn: #C4841D;
+    --ink-warm: #2A241C;
+    --shadow: 0 10px 28px rgba(20, 48, 40, 0.09);
+    --shadow-soft: 0 4px 14px rgba(20, 48, 40, 0.06);
+    --phone-w: 390px;
+    --phone-h: 844px;
+    --font: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --display: "Noto Serif SC", "Songti SC", "Noto Serif CJK SC", serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font);
+    color: var(--text);
+    background:
+      radial-gradient(900px 480px at 8% -8%, #cfe9df 0%, transparent 52%),
+      radial-gradient(760px 420px at 100% 0%, #e8e0cf 0%, transparent 48%),
+      radial-gradient(600px 360px at 70% 100%, #d7e7ef 0%, transparent 45%),
+      #e9ece7;
+  }
+  .stage {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 28px;
+    padding: 28px;
+  }
+  .side {
+    position: sticky;
+    top: 28px;
+    align-self: start;
+    background: rgba(255,255,255,.78);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.8);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .side h1 { font-size: 18px; margin: 0 0 6px; }
+  .side p { margin: 0 0 14px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+  .flow-list { display: grid; gap: 8px; }
+  .flow-btn {
+    text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 10px;
+    padding: 10px 12px; cursor: pointer; font-size: 12px; line-height: 1.4;
+  }
+  .flow-btn:hover { border-color: var(--theme); color: var(--theme); }
+  .flow-btn b { display: block; font-size: 13px; margin-bottom: 2px; color: var(--text); }
+  .main { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .phone {
+    width: var(--phone-w); height: var(--phone-h);
+    background: linear-gradient(160deg, #1a221f, #0d1210 55%, #141a18);
+    border-radius: 36px; padding: 12px;
+    box-shadow: 0 30px 80px rgba(16, 30, 26, 0.32), 0 0 0 1px rgba(255,255,255,.06) inset;
+    position: relative;
+  }
+  .phone-notch {
+    position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 28px; background: #0f1211; border-radius: 0 0 16px 16px; z-index: 5;
+  }
+  .screen {
+    height: 100%; border-radius: 28px; overflow: hidden;
+    display: flex; flex-direction: column; position: relative;
+    background:
+      radial-gradient(420px 220px at 12% 0%, rgba(31,138,111,.16), transparent 60%),
+      radial-gradient(360px 200px at 100% 8%, rgba(196,148,70,.10), transparent 55%),
+      linear-gradient(180deg, #F7F5EF 0%, #F1F4F1 42%, #EEF2EF 100%);
+  }
+  .screen::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .35;
+    background-image: radial-gradient(rgba(20,50,40,.045) 0.7px, transparent 0.7px);
+    background-size: 12px 12px; z-index: 0;
+  }
+  .screen > * { position: relative; z-index: 1; }
+  .status {
+    height: 44px; padding: 12px 20px 0; display: flex; justify-content: space-between;
+    font-size: 12px; font-weight: 600; color: var(--ink-warm); flex-shrink: 0;
+  }
+  .nav {
+    height: 48px; display: flex; align-items: center; justify-content: center;
+    position: relative; padding: 0 12px;
+    background: rgba(255,252,248,.78); backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(227,231,226,.9); flex-shrink: 0;
+  }
+  .nav .back, .nav .right {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    border: 0; background: transparent; color: var(--theme); font-size: 14px; cursor: pointer;
+  }
+  .nav .back { left: 12px; }
+  .nav .right { right: 12px; }
+  .nav .title { font-size: 16px; font-weight: 700; font-family: var(--display); letter-spacing: 0; }
+  .content { flex: 1; overflow: auto; padding-bottom: 8px; }
+  .tabbar {
+    height: 64px; background: rgba(255,252,248,.92); border-top: 1px solid rgba(227,231,226,.95);
+    display: grid; grid-template-columns: repeat(5, 1fr); flex-shrink: 0;
+    backdrop-filter: blur(14px); box-shadow: 0 -8px 24px rgba(18,40,32,.04);
+  }
+  .tab {
+    border: 0; background: transparent; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px; color: var(--muted);
+    font-size: 10px; cursor: pointer;
+  }
+  .tab .ico { font-size: 18px; line-height: 1; }
+  .tab.active { color: var(--theme); font-weight: 700; }
+  .tab.active .ico { transform: translateY(-1px); }
+  .tab.publish .ico {
+    width: 38px; height: 38px; border-radius: 50%; color: #fff;
+    background: linear-gradient(145deg, #1F8A6F, #0F5C4A);
+    box-shadow: 0 8px 16px rgba(15,92,74,.28);
+    display: grid; place-items: center; font-size: 22px; margin-bottom: -2px;
+  }
+  .banner {
+    margin: 10px 14px 0; padding: 9px 12px; border-radius: 12px;
+    background: linear-gradient(90deg, #FFF6E5, #F8F1E2); color: #8A5A12;
+    font-size: 11px; line-height: 1.45; border: 1px solid #F0E2C2;
+  }
+  .card {
+    background: var(--card); border-radius: 14px; border: 1px solid rgba(227,231,226,.95);
+    box-shadow: var(--shadow-soft);
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px;
+    border-radius: 999px; font-size: 11px; font-weight: 600;
+    background: var(--soft); color: var(--theme);
+  }
+  .chip.gray { background: #EEF1F0; color: #566; }
+  .chip.orange { background: #FFF1E6; color: #B8621B; }
+  .chip.red { background: #FDECEA; color: var(--danger); }
+  .btn {
+    border: 0; border-radius: 12px; padding: 11px 14px; font-size: 14px; font-weight: 650;
+    cursor: pointer; color: #fff;
+    background: linear-gradient(145deg, #1F8A6F 0%, #146B56 100%);
+    box-shadow: 0 6px 14px rgba(20,107,86,.22);
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn.ghost {
+    background: rgba(255,252,248,.9); color: var(--theme);
+    border: 1px solid #C5E2D7; box-shadow: none;
+  }
+  .btn.block { width: 100%; }
+  .btn.sm { padding: 7px 10px; font-size: 12px; border-radius: 9px; }
+  .muted { color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .space { justify-content: space-between; }
+  .grow { flex: 1; }
+  .stack { display: grid; gap: 10px; }
+  .pad { padding: 14px; }
+  .section-title { font-size: 14px; font-weight: 700; margin: 0; }
+  .input, textarea, select {
+    width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px;
+    font: inherit; background: #FFFcf8; color: var(--text);
+  }
+  .input:focus, textarea:focus, select:focus {
+    outline: none; border-color: #9FCBBA; box-shadow: 0 0 0 3px rgba(31,138,111,.12);
+  }
+  textarea { min-height: 110px; resize: vertical; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--soft); color: var(--theme);
+    display: grid; place-items: center; font-weight: 700; flex-shrink: 0;
+  }
+  .avatar.lg { width: 56px; height: 56px; font-size: 22px; }
+  .list-item { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .list-item:last-child { border-bottom: 0; }
+  .toast {
+    position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%);
+    background: rgba(20,28,26,.92); color: #fff; padding: 8px 12px; border-radius: 999px;
+    font-size: 12px; opacity: 0; pointer-events: none; transition: .2s ease; z-index: 20;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+  .sheet {
+    position: absolute; inset: 0; background: rgba(0,0,0,.35); display: none; z-index: 15;
+    align-items: flex-end;
+  }
+  .sheet.show { display: flex; }
+  .sheet-panel {
+    width: 100%; background: #fff; border-radius: 18px 18px 0 0; padding: 14px 14px 28px;
+  }
+  .sheet-item {
+    padding: 14px; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 14px;
+  }
+  .home-ai {
+    margin: 12px 14px; padding: 14px; border-radius: 16px; color: #fff;
+    background: linear-gradient(145deg, #1F6B5A 0%, #2F8F78 55%, #3FA48A 100%);
+  }
+  .home-ai h2 { margin: 0; font-size: 16px; font-weight: 700; }
+  .home-ai .box {
+    margin-top: 10px; background: rgba(255,255,255,.96); border-radius: 14px; padding: 10px;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .home-ai input {
+    border: 0; outline: 0; flex: 1; font-size: 14px; color: var(--text); background: transparent;
+  }
+  .quick { display: flex; gap: 8px; overflow: auto; padding: 4px 14px 10px; }
+  .quick button {
+    flex: 0 0 auto; border: 1px solid #D5E6DF; background: rgba(255,252,248,.95);
+    border-radius: 999px; padding: 8px 12px; font-size: 12px; cursor: pointer;
+    color: #23463C; box-shadow: 0 2px 8px rgba(20,48,40,.04);
+  }
+  .quick button:active { background: var(--soft); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px; }
+  .entry {
+    padding: 14px; border-radius: 14px; background: #fff; border: 1px solid var(--line); cursor: pointer;
+  }
+  .entry b { display: block; margin-bottom: 4px; }
+  .notice, .act-panel {
+    margin: 10px 14px 0; border-radius: 16px; position: relative; overflow: hidden;
+    background:
+      radial-gradient(180px 80px at 100% 0%, rgba(255,210,120,.35), transparent 60%),
+      linear-gradient(135deg, #FFF9EF 0%, #F7F0DF 55%, #EEF7F2 100%);
+    border: 1px solid rgba(226, 196, 120, .55);
+    box-shadow: 0 10px 24px rgba(120, 80, 20, .08), 0 0 0 1px rgba(255,255,255,.55) inset;
+  }
+  .act-panel { padding: 0; }
+  .act-head {
+    display: flex; gap: 10px; align-items: center; padding: 10px 10px 10px 12px;
+  }
+  .act-ico {
+    width: 34px; height: 34px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(145deg, #F6D58A, #E4B24A); color: #5C3D0C;
+    display: grid; place-items: center; font-size: 12px; font-weight: 800;
+    box-shadow: 0 6px 14px rgba(196,148,40,.28);
+  }
+  .act-main { flex: 1; min-width: 0; cursor: pointer; }
+  .act-kicker {
+    display: flex; align-items: center; gap: 6px; font-size: 10px; color: #8A6520; font-weight: 700;
+  }
+  .act-live {
+    width: 6px; height: 6px; border-radius: 50%; background: #E07A20;
+    box-shadow: 0 0 0 0 rgba(224,122,32,.55);
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(224,122,32,.45); }
+    70% { box-shadow: 0 0 0 8px rgba(224,122,32,0); }
+    100% { box-shadow: 0 0 0 0 rgba(224,122,32,0); }
+  }
+  .act-title {
+    margin-top: 3px; font-size: 13px; font-weight: 700; line-height: 1.35;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .act-sub { margin-top: 2px; font-size: 11px; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .act-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+  .act-btn, .act-close {
+    border: 0; background: transparent; color: #7A6842; cursor: pointer;
+    width: 28px; height: 28px; border-radius: 8px; font-size: 14px; line-height: 1;
+  }
+  .act-btn:hover, .act-close:hover { background: rgba(255,255,255,.7); color: var(--text); }
+  .act-dots { display: flex; gap: 4px; margin-top: 6px; }
+  .act-dots i {
+    width: 5px; height: 5px; border-radius: 999px; background: rgba(140,110,40,.25); display: block;
+    transition: .25s ease;
+  }
+  .act-dots i.on { width: 14px; background: linear-gradient(90deg, #E0A020, #C47A18); }
+  .act-body {
+    display: none; padding: 0 12px 12px; border-top: 1px dashed rgba(196,160,80,.35);
+    animation: actIn .28s ease;
+  }
+  .act-panel.open .act-body { display: block; }
+  .act-panel.open .act-btn { transform: rotate(180deg); }
+  @keyframes actIn { from { opacity: 0; transform: translateY(-4px);} to { opacity: 1; transform: none; } }
+  .act-slide {
+    margin-top: 10px; padding: 12px; border-radius: 14px;
+    background: rgba(255,252,248,.88); border: 1px solid rgba(226,200,130,.35);
+  }
+  .act-slide .row { margin-bottom: 6px; }
+  .act-meta { font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .act-list { margin-top: 10px; display: grid; gap: 6px; }
+  .act-item {
+    display: flex; justify-content: space-between; gap: 8px; align-items: center;
+    padding: 8px 10px; border-radius: 10px; background: #F7F3E8; cursor: pointer;
+    font-size: 12px;
+  }
+  .act-item:hover { background: #F0EBDC; }
+  .act-item.active { outline: 1px solid rgba(196,148,40,.45); background: #FFF8E8; }
+  .home-slogan {
+    margin: 10px 14px 0; padding: 16px 14px 16px; border-radius: 20px; color: #fff; position: relative; overflow: hidden;
+    background:
+      radial-gradient(220px 120px at 88% -10%, rgba(255,220,140,.42), transparent 60%),
+      radial-gradient(180px 100px at 0% 100%, rgba(80,200,170,.28), transparent 55%),
+      linear-gradient(125deg, #08382E 0%, #0F5A48 36%, #1B8A6E 72%, #3AA88A 100%);
+    background-size: 140% 140%;
+    animation: aurora 8s ease-in-out infinite alternate;
+    box-shadow: 0 16px 36px rgba(8,56,46,.28), 0 0 0 1px rgba(255,255,255,.08) inset;
+  }
+  @keyframes aurora {
+    0% { background-position: 0% 40%; }
+    100% { background-position: 100% 60%; }
+  }
+  .home-slogan::before {
+    content: ""; position: absolute; inset: -40% -20%;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.18) 48%, transparent 66%);
+    transform: translateX(-60%);
+    animation: shine 4.8s ease-in-out infinite;
+  }
+  @keyframes shine {
+    0%, 55% { transform: translateX(-70%) rotate(8deg); }
+    100% { transform: translateX(120%) rotate(8deg); }
+  }
+  .home-slogan::after {
+    content: ""; position: absolute; right: -20px; bottom: -28px; width: 130px; height: 130px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.2), rgba(255,255,255,0) 70%);
+  }
+  .home-slogan .s-kicker { font-size: 11px; opacity: .92; font-weight: 600; position: relative; z-index: 1; }
+  .home-slogan .s-line {
+    margin-top: 7px; font-size: 24px; font-weight: 700; letter-spacing: 0;
+    font-family: var(--display); line-height: 1.22; position: relative; z-index: 1;
+    text-shadow: 0 8px 24px rgba(0,0,0,.18);
+  }
+  .home-slogan .s-sub {
+    margin-top: 8px; font-size: 11px; opacity: .9; position: relative; z-index: 1;
+  }
+  .home-slogan .s-glow {
+    position: absolute; left: 18px; bottom: 12px; width: 58px; height: 4px; border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255,220,140,.95), rgba(255,255,255,.15));
+    z-index: 1;
+  }
+  .home-chat { padding: 8px 0 12px; min-height: 220px; max-height: calc(100% - 250px); overflow: auto; }
+  .home-empty {
+    margin: 22px 24px 8px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.7;
+  }
+  .home-empty b {
+    display: block; margin-bottom: 4px; color: var(--theme-deep);
+    font-family: var(--display); font-size: 16px; font-weight: 700;
+  }
+  .home-composer {
+    position: sticky; bottom: 0;
+    background: rgba(255,252,248,.92); backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(227,231,226,.95); padding: 10px 12px 12px;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .home-composer .input {
+    background: #fff; border-color: #D7E3DD; box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+  }
+  .msg-user, .msg-ai { max-width: 86%; padding: 11px 13px; border-radius: 16px; font-size: 13.5px; line-height: 1.6; animation: msgIn .28s ease; }
+  @keyframes msgIn { from { opacity: 0; transform: translateY(6px) scale(.98);} to { opacity: 1; transform: none; } }
+  .msg-user {
+    margin: 10px 14px 10px auto; color: #fff; border-bottom-right-radius: 5px;
+    background: linear-gradient(145deg, #1F8A6F, #125E4B);
+    box-shadow: 0 8px 18px rgba(18,94,75,.18);
+  }
+  .msg-ai {
+    margin: 10px 14px; background: rgba(255,252,248,.96);
+    border: 1px solid rgba(227,231,226,.95); border-bottom-left-radius: 5px;
+    box-shadow: var(--shadow-soft);
+  }
+  .source {
+    margin-top: 8px; padding: 9px 10px; border-radius: 11px;
+    background: linear-gradient(180deg, #F4FAF7, #F0F5F2); font-size: 11px;
+    border: 1px solid #E0EBE6;
+  }
+  .post {
+    margin: 0 14px 10px; padding: 12px; background: #fff; border-radius: 14px; border: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .goods {
+    display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: center;
+    padding: 12px; background: #fff; border-radius: 14px; border: 1px solid var(--line); cursor: pointer;
+  }
+  .goods .thumb {
+    width: 64px; height: 64px; border-radius: 12px; background: var(--soft);
+    display: grid; place-items: center; font-size: 28px;
+  }
+  .price { color: var(--danger); font-weight: 700; }
+  .hint { font-size: 11px; color: var(--muted); padding: 0 14px; }
+  .demo-tag {
+    position: absolute; top: 54px; right: 10px; z-index: 6;
+    background: rgba(31,107,90,.92); color: #fff; font-size: 10px; padding: 4px 8px; border-radius: 999px;
+  }
+  @media (max-width: 960px) {
+    .stage { grid-template-columns: 1fr; }
+    .side { position: relative; top: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <aside class="side">
+    <h1>用户小程序原型</h1>
+    <p>演示学校：西安邮电大学（专属入口已锁定，无切换学校）。内置演示数据，可点左侧故事线或手机内 Tab 走完主流程。</p>
+    <div class="flow-list" id="flowList"></div>
+    <p style="margin-top:14px">其他端：</p>
+    <div class="flow-list">
+      <button class="flow-btn" onclick="location.href='../school-admin/app.html'"><b>学校管理 Web</b>待整理求助 / 知识审核</button>
+      <button class="flow-btn" onclick="location.href='../platform-console/app.html'"><b>平台控制台</b>开通学校实例</button>
+      <button class="flow-btn" onclick="location.href='../index.html'"><b>返回总入口</b></button>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="screen" id="screen">
+        <div class="demo-tag">Demo · 西安邮电大学</div>
+        <div class="status"><span>9:41</span><span>AI校园通</span></div>
+        <div class="nav" id="nav"></div>
+        <div class="content" id="content"></div>
+        <div class="tabbar" id="tabbar"></div>
+        <div class="toast" id="toast"></div>
+        <div class="sheet" id="sheet"></div>
+      </div>
+    </div>
+    <div class="muted" style="font-size:12px">提示：点「想收四六级耳机 / 无答案发帖 / 失物 / 私信」可串完整演示路径</div>
+  </div>
+</div>
+<script>
+const M = window.CAMPUS_MOCK;
+const state = {
+  screen: 'login',
+  tab: 'home',
+  stack: [],
+  aiInput: '',
+  aiMessages: [],
+  postDraft: '',
+  marketKeyword: '',
+  marketCampus: '长安校区',
+  currentPostId: 'p1',
+  currentGoodsId: 'g1',
+  currentActivityId: 'a1',
+  currentChatId: 'c1',
+  lostDraft: { kind: '丢失', title: '', place: '', desc: '' },
+  msgTab: 'chat',
+  hideActivityNotice: false,
+  activityExpanded: false,
+  activityIndex: 0
+};
+
+const flows = [
+  { title: '1. 登录进入本校', desc: '专属入口锁定西安邮电大学', run: () => go('login', true) },
+  { title: '2. AI 有答案', desc: '图书馆闭馆时间 + 来源', run: () => { go('home', true); setTimeout(() => askAI(M.aiScenarios.library.q), 200); } },
+  { title: '3. AI 无答案转广场', desc: '生成草稿 → 发帖', run: () => { go('home', true); setTimeout(() => askAI(M.aiScenarios.unknown.q), 200); } },
+  { title: '4. AI 路由闲置', desc: '四六级耳机筛选', run: () => { go('home', true); setTimeout(() => askAI(M.aiScenarios.headphone.q), 200); } },
+  { title: '5. 广场顶部失物', desc: '失物模块 + 动态流', run: () => go('square', true) },
+  { title: '6. 管理员已整理样例', desc: '帖子详情展示整理态', run: () => openPost('p3') },
+  { title: '7. 闲置私信', desc: '商品详情 → 会话', run: () => openGoods('g1') },
+  { title: '8. 活动推广', desc: '活动详情含推广标', run: () => openActivity('a1') },
+];
+
+function $(id){ return document.getElementById(id); }
+function toast(t){
+  const el = $('toast'); el.textContent = t; el.classList.add('show');
+  clearTimeout(window.__tt); window.__tt = setTimeout(() => el.classList.remove('show'), 1600);
+}
+function showTabbar(){
+  return ['home','square','messages','me','market','activities','lost'].includes(state.screen);
+}
+function go(screen, reset=false){
+  if (!reset && state.screen !== screen) state.stack.push(state.screen);
+  if (reset) state.stack = [];
+  state.screen = screen;
+  if (['home','square','messages','me'].includes(screen)) state.tab = screen;
+  render();
+}
+function back(){
+  const prev = state.stack.pop();
+  state.screen = prev || 'home';
+  render();
+}
+function renderFlows(){
+  $('flowList').innerHTML = flows.map((f,i)=>`<button class="flow-btn" data-i="${i}"><b>${f.title}</b>${f.desc}</button>`).join('');
+  $('flowList').onclick = (e) => {
+    const btn = e.target.closest('[data-i]');
+    if (!btn) return;
+    flows[+btn.dataset.i].run();
+  };
+}
+function renderTabbar(){
+  const tabs = [
+    { id:'home', ico:'⌂', label:'首页' },
+    { id:'square', ico:'◈', label:'广场' },
+    { id:'publish', ico:'+', label:'发布', publish:true },
+    { id:'messages', ico:'✎', label:'消息' },
+    { id:'me', ico:'☺', label:'我的' },
+  ];
+  const el = $('tabbar');
+  if (!showTabbar() && state.screen !== 'publishSheet') { el.style.display = 'none'; return; }
+  el.style.display = 'grid';
+  el.innerHTML = tabs.map(t => `
+    <button class="tab ${t.publish?'publish':''} ${state.tab===t.id?'active':''}" data-tab="${t.id}">
+      <div class="ico">${t.ico}</div>${t.label}
+    </button>`).join('');
+  el.onclick = (e) => {
+    const b = e.target.closest('[data-tab]');
+    if (!b) return;
+    const id = b.dataset.tab;
+    if (id === 'publish') { openPublishSheet(); return; }
+    go(id, true);
+  };
+}
+function openPublishSheet(){
+  const sheet = $('sheet');
+  sheet.classList.add('show');
+  sheet.innerHTML = `<div class="sheet-panel">
+    <div style="text-align:center;font-weight:700;margin-bottom:8px">发布</div>
+    <div class="sheet-item" data-go="compose">发广场动态</div>
+    <div class="sheet-item" data-go="lost-publish">发布失物招领</div>
+    <div class="sheet-item" data-go="market">发布个人闲置（示意）</div>
+    <div class="sheet-item" data-go="activities">发布活动（需组织身份）</div>
+    <div class="sheet-item" style="border:0;color:#888;text-align:center" data-close>取消</div>
+  </div>`;
+  sheet.onclick = (e) => {
+    if (e.target.dataset.close !== undefined || e.target === sheet) { sheet.classList.remove('show'); return; }
+    const item = e.target.closest('[data-go]');
+    if (!item) return;
+    sheet.classList.remove('show');
+    const g = item.dataset.go;
+    if (g === 'compose') { state.postDraft=''; go('compose'); }
+    else if (g === 'lost-publish') go('lost-publish');
+    else if (g === 'market') { toast('演示：进入闲置频道'); go('market'); }
+    else go('activities');
+  };
+}
+function navBar(title, opts={}){
+  const backBtn = opts.back ? `<button class="back" id="navBack">‹ 返回</button>` : `<span></span>`;
+  const right = opts.right ? `<button class="right" id="navRight">${opts.right}</button>` : '';
+  $('nav').innerHTML = `${backBtn}<div class="title">${title}</div>${right}`;
+  const b = $('navBack'); if (b) b.onclick = () => back();
+  const r = $('navRight'); if (r && opts.onRight) r.onclick = opts.onRight;
+}
+
+function pageLogin(){
+  navBar('登录');
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `
+    <div class="pad stack" style="padding-top:28px">
+      <div class="row" style="gap:12px">
+        <div class="avatar lg">${M.school.logoText}</div>
+        <div>
+          <div style="font-size:20px;font-weight:750">${M.school.name}校园通</div>
+          <div class="muted" style="font-size:12px;margin-top:4px">由专属入口进入 · 已锁定本校实例</div>
+        </div>
+      </div>
+      <div class="banner">${M.school.disclaimer}。学院/专业等资料均为用户自述，不代表学籍认证。</div>
+      <label class="muted" style="font-size:12px">手机号</label>
+      <input class="input" value="138****2618" readonly />
+      <label class="muted" style="font-size:12px">验证码</label>
+      <input class="input" value="246810" readonly />
+      <button class="btn block" id="doLogin">进入${M.school.shortName}校园通</button>
+      <div class="muted" style="font-size:11px;line-height:1.5">演示说明：此入口模拟「西邮专属太阳码」。不会出现学校切换列表。</div>
+    </div>`;
+  $('doLogin').onclick = () => go('home', true);
+}
+
+function pageHome(){
+  navBar(M.school.name);
+  clearInterval(window.__actTimer);
+  const acts = M.activities || [];
+  if (state.activityIndex >= acts.length) state.activityIndex = 0;
+  const act = acts[state.activityIndex] || acts[0];
+  const expanded = state.activityExpanded;
+
+  const dots = acts.map((_, i) => `<i class="${i===state.activityIndex?'on':''}"></i>`).join('');
+  const list = acts.map((a, i) => `
+    <div class="act-item ${i===state.activityIndex?'active':''}" data-act-idx="${i}" data-act="${a.id}">
+      <span>${a.promo?'【推广】':''}${a.title}</span>
+      <span class="muted">${a.time}</span>
+    </div>`).join('');
+
+  const notice = (!state.hideActivityNotice && act) ? `
+    <div class="act-panel ${expanded?'open':''}" id="actPanel">
+      <div class="act-head">
+        <div class="act-ico">活</div>
+        <div class="act-main" id="actToggleMain">
+          <div class="act-kicker"><span class="act-live"></span>校园活动 · 轮播中</div>
+          <div class="act-title">${act.promo ? '【推广】' : ''}${act.title}</div>
+          <div class="act-sub">${act.time} · ${act.place}</div>
+          <div class="act-dots">${dots}</div>
+        </div>
+        <div class="act-actions">
+          <button class="act-btn" id="actExpand" title="展开">▾</button>
+          <button class="act-close" id="closeAct" aria-label="关闭">×</button>
+        </div>
+      </div>
+      <div class="act-body">
+        <div class="act-slide">
+          <div class="row space">
+            <b style="font-size:14px">${act.title}</b>
+            ${act.promo?'<span class="chip orange">推广</span>':'<span class="chip gray">'+act.tag+'</span>'}
+          </div>
+          <div class="act-meta">主办 ${act.org}<br/>时间 ${act.time}<br/>地点 ${act.place}<br/>名额 ${act.seats}</div>
+          <div class="row" style="margin-top:10px;gap:8px">
+            <button class="btn sm" id="actOpen">查看详情</button>
+            <button class="btn ghost sm" id="actAll">全部活动</button>
+          </div>
+        </div>
+        <div class="act-list">${list}</div>
+      </div>
+    </div>` : '';
+
+  const msgs = (state.aiMessages || []).map(m => {
+    if (m.role==='user') return `<div class="msg-user">${m.text}</div>`;
+    if (m.kind==='official') return `<div class="msg-ai">
+      <span class="chip">官方资料</span>
+      <div style="margin-top:8px">${m.answer}</div>
+      ${m.sources.map(s=>`<div class="source"><b>${s.tag}</b> · ${s.title}<div class="muted">更新 ${s.date}</div></div>`).join('')}
+      <div class="row" style="margin-top:10px;gap:8px">
+        <button class="btn ghost sm" onclick="toast('已记录：有帮助')">有帮助</button>
+        <button class="btn ghost sm" onclick="toast('已记录：信息过期')">信息过期</button>
+      </div>
+    </div>`;
+    if (m.kind==='route') return `<div class="msg-ai">
+      <div>识别到你想<strong>${m.intent}</strong>。</div>
+      <div class="card pad" style="margin-top:10px">
+        <div class="chip">模块跳转</div>
+        <div style="margin:8px 0;font-weight:650">${m.routeLabel}</div>
+        <div class="muted" style="font-size:12px">关键词：${m.filters.keyword} · 校区：${m.filters.campus}</div>
+        <button class="btn block" style="margin-top:10px" id="goMarket">打开个人闲置</button>
+      </div>
+    </div>`;
+    if (m.kind==='route-act') return `<div class="msg-ai">
+      <div>${m.routeLabel}</div>
+      <button class="btn" style="margin-top:10px" id="goAct">查看校园活动</button>
+    </div>`;
+    if (m.kind==='hybrid') return `<div class="msg-ai">
+      <span class="chip gray">综合指引</span>
+      <div style="margin-top:8px">${m.answer}</div>
+      <div class="row" style="margin-top:10px;gap:8px">
+        <button class="btn ghost sm" id="goLostSearch">去失物招领</button>
+        <button class="btn sm" id="goLostPub">发布丢失</button>
+      </div>
+    </div>`;
+    return `<div class="msg-ai">
+      <span class="chip red">无法确认</span>
+      <div style="margin-top:8px">${m.answer}</div>
+      <div class="card pad" style="margin-top:10px;background:var(--soft);border-color:#CDE6DE">
+        <b>发布到校园广场</b>
+        <button class="btn block" style="margin-top:10px" id="toPost">生成帖子草稿</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const empty = !state.aiMessages.length ? `
+    <div class="home-empty"><b>今天想了解点什么？</b>点快捷问题，或直接输入</div>
+    <div class="quick" id="quick" style="padding-bottom:8px"></div>` : '';
+
+  $('content').innerHTML = `
+    <div class="banner">${M.school.disclaimer}</div>
+    ${notice}
+    <div class="home-slogan">
+      <div class="s-kicker">${M.school.shortName} · ${M.me.campus}</div>
+      <div class="s-line">西邮的事，先问一句</div>
+      <div class="s-sub">官方资料 · 校园经验 · 一问直达</div>
+      <div class="s-glow"></div>
+    </div>
+    <div class="home-chat">
+      ${empty}
+      ${msgs}
+    </div>
+    <div class="home-composer">
+      <input class="input" id="homeQ" placeholder="输入问题" />
+      <button class="btn sm" id="homeAsk">发送</button>
+    </div>`;
+
+  const q = $('quick');
+  if (q) {
+    q.innerHTML = M.quickQuestions.map(x=>`<button data-q="${x}">${x}</button>`).join('');
+    q.onclick = (e)=>{ const b=e.target.closest('[data-q]'); if(b) askAI(b.dataset.q); };
+  }
+  $('homeAsk').onclick = ()=> askAI($('homeQ').value || (M.quickQuestions[0]||''));
+  $('homeQ').onkeydown = (e)=>{ if(e.key==='Enter') $('homeAsk').click(); };
+
+  const closeBtn = $('closeAct');
+  if (closeBtn) closeBtn.onclick = (e)=>{ e.stopPropagation(); state.hideActivityNotice = true; state.activityExpanded = false; clearInterval(window.__actTimer); render(); };
+  const expandBtn = $('actExpand');
+  const toggleMain = $('actToggleMain');
+  const toggleExpand = (e)=>{ if(e) e.stopPropagation(); state.activityExpanded = !state.activityExpanded; render(); };
+  if (expandBtn) expandBtn.onclick = toggleExpand;
+  if (toggleMain) toggleMain.onclick = toggleExpand;
+  const actOpen = $('actOpen'); if (actOpen) actOpen.onclick = (e)=>{ e.stopPropagation(); openActivity(act.id); };
+  const actAll = $('actAll'); if (actAll) actAll.onclick = (e)=>{ e.stopPropagation(); go('activities'); };
+
+  const gm=$('goMarket'); if(gm) gm.onclick=()=>{ state.marketKeyword='四六级耳机'; state.marketCampus=M.me.campus; go('market'); toast('已带入筛选条件'); };
+  const ga=$('goAct'); if(ga) ga.onclick=()=>go('activities');
+  const gls=$('goLostSearch'); if(gls) gls.onclick=()=>go('lost');
+  const glp=$('goLostPub'); if(glp) glp.onclick=()=>go('lost-publish');
+  const tp=$('toPost'); if(tp) tp.onclick=()=>{ state.postDraft = M.aiScenarios.unknown.draft; go('ai-to-post'); };
+
+  $('content').onclick = (e)=>{
+    const item = e.target.closest('[data-act-idx]');
+    if (item) {
+      state.activityIndex = +item.dataset.actIdx;
+      render();
+      return;
+    }
+    const a=e.target.closest('[data-act]'); if(a && !a.closest('.act-panel')) openActivity(a.dataset.act);
+  };
+
+  // rotate activities when collapsed and visible
+  if (!state.hideActivityNotice && acts.length > 1 && !state.activityExpanded) {
+    window.__actTimer = setInterval(() => {
+      if (state.screen !== 'home' || state.hideActivityNotice || state.activityExpanded) {
+        clearInterval(window.__actTimer); return;
+      }
+      state.activityIndex = (state.activityIndex + 1) % acts.length;
+      // soft update titles without full re-render of chat if possible
+      const title = document.querySelector('.act-title');
+      const sub = document.querySelector('.act-sub');
+      const cur = acts[state.activityIndex];
+      if (title && sub && cur) {
+        title.textContent = (cur.promo ? '【推广】' : '') + cur.title;
+        sub.textContent = cur.time + ' · ' + cur.place;
+        document.querySelectorAll('.act-dots i').forEach((d,i)=> d.classList.toggle('on', i===state.activityIndex));
+      } else {
+        render();
+      }
+    }, 3200);
+  }
+
+  const chat = document.querySelector('.home-chat');
+  if (chat) chat.scrollTop = chat.scrollHeight;
+}
+
+function detectScenario(q){
+  if (/图书馆|关门|几点/.test(q)) return M.aiScenarios.library;
+  if (/耳机|四六级|想收|想买/.test(q)) return M.aiScenarios.headphone;
+  if (/校园卡|丢了|失物/.test(q)) return M.aiScenarios.lost;
+  if (/社团|纳新|活动/.test(q)) return { q, type:'route-act', routeLabel:'已为你筛选近期社团活动' };
+  if (/作业|老师|难不难|多不多/.test(q)) return M.aiScenarios.unknown;
+  return M.aiScenarios.unknown;
+}
+function askAI(q){
+  q = (q||'').trim();
+  if (!q) return;
+  state.aiInput = q;
+  state.aiMessages = [{ role:'user', text:q }];
+  const sc = detectScenario(q);
+  if (sc.type === 'official') {
+    state.aiMessages.push({ role:'ai', kind:'official', ...sc });
+  } else if (sc.type === 'route') {
+    state.aiMessages.push({ role:'ai', kind:'route', ...sc });
+  } else if (sc.type === 'route-act') {
+    state.aiMessages.push({ role:'ai', kind:'route-act', ...sc });
+  } else if (sc.type === 'hybrid') {
+    state.aiMessages.push({ role:'ai', kind:'hybrid', ...sc });
+  } else {
+    state.aiMessages.push({ role:'ai', kind:'no_answer', ...sc });
+  }
+  go('home');
+}
+function pageAI(){
+  navBar('AI 校园助手', { back:true });
+  $('tabbar').style.display='none';
+  const msgs = state.aiMessages.map(m => {
+    if (m.role==='user') return `<div class="msg-user">${m.text}</div>`;
+    if (m.kind==='official') return `<div class="msg-ai">
+      <span class="chip">官方资料</span>
+      <div style="margin-top:8px">${m.answer}</div>
+      ${m.sources.map(s=>`<div class="source"><b>${s.tag}</b> · ${s.title}<div class="muted">更新 ${s.date}</div></div>`).join('')}
+      <div class="row" style="margin-top:10px;gap:8px">
+        <button class="btn ghost sm" onclick="toast('已记录：有帮助')">有帮助</button>
+        <button class="btn ghost sm" onclick="toast('已记录：信息过期')">信息过期</button>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:8px">答案仅供参考，重要事项以学校公开渠道最新信息为准。</div>
+    </div>`;
+    if (m.kind==='route') return `<div class="msg-ai">
+      <div>识别到你想<strong>${m.intent}</strong>。</div>
+      <div class="card pad" style="margin-top:10px">
+        <div class="chip">模块跳转</div>
+        <div style="margin:8px 0;font-weight:650">${m.routeLabel}</div>
+        <div class="muted" style="font-size:12px">关键词：${m.filters.keyword} · 校区：${m.filters.campus}</div>
+        <button class="btn block" style="margin-top:10px" id="goMarket">打开个人闲置</button>
+      </div>
+    </div>`;
+    if (m.kind==='route-act') return `<div class="msg-ai">
+      <div>${m.routeLabel}</div>
+      <button class="btn" style="margin-top:10px" id="goAct">查看校园活动</button>
+    </div>`;
+    if (m.kind==='hybrid') return `<div class="msg-ai">
+      <span class="chip gray">综合指引</span>
+      <div style="margin-top:8px">${m.answer}</div>
+      <div class="row" style="margin-top:10px;gap:8px">
+        <button class="btn ghost sm" id="goLostSearch">去失物招领搜索</button>
+        <button class="btn sm" id="goLostPub">发布丢失信息</button>
+      </div>
+    </div>`;
+    return `<div class="msg-ai">
+      <span class="chip red">无法确认</span>
+      <div style="margin-top:8px">${m.answer}</div>
+      <div class="card pad" style="margin-top:10px;background:var(--soft);border-color:#CDE6DE">
+        <b>一键求助校园广场</b>
+        <div class="muted" style="font-size:12px;margin-top:6px">不会自动发帖，需你确认草稿</div>
+        <button class="btn block" style="margin-top:10px" id="toPost">生成广场帖子草稿</button>
+      </div>
+    </div>`;
+  }).join('');
+  $('content').innerHTML = `
+    <div class="banner">当前学校：${M.school.name} · ${M.me.campus}（入口已锁定）</div>
+    <div style="padding-bottom:70px">${msgs}</div>
+    <div style="position:sticky;bottom:0;background:#f4f6f5;padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px">
+      <input class="input" id="aiBox" placeholder="继续追问…" />
+      <button class="btn sm" id="aiSend">发送</button>
+    </div>`;
+  const bind = () => {
+    const gm=$('goMarket'); if(gm) gm.onclick=()=>{ state.marketKeyword='四六级耳机'; state.marketCampus='主校区'; go('market'); toast('已带入筛选条件'); };
+    const ga=$('goAct'); if(ga) ga.onclick=()=>go('activities');
+    const gls=$('goLostSearch'); if(gls) gls.onclick=()=>go('lost');
+    const glp=$('goLostPub'); if(glp) glp.onclick=()=>go('lost-publish');
+    const tp=$('toPost'); if(tp) tp.onclick=()=>{ state.postDraft = M.aiScenarios.unknown.draft; go('ai-to-post'); };
+  };
+  bind();
+  $('aiSend').onclick=()=>{
+    const v=$('aiBox').value.trim(); if(!v) return; askAI(v);
+  };
+}
+
+function pageAiToPost(){
+  navBar('确认发布求助', { back:true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="banner">来自 AI 无答案 · 发布后进入广场统一动态流（无话题分类）</div>
+      <label class="muted" style="font-size:12px">正文</label>
+      <textarea id="draft">${state.postDraft || M.aiScenarios.unknown.draft}</textarea>
+      <div class="row space">
+        <span class="muted" style="font-size:12px">校区</span>
+        <span class="chip">${M.me.campus}</span>
+      </div>
+      <div class="row space">
+        <span class="muted" style="font-size:12px">身份</span>
+        <span class="chip gray">匿名（平台可追溯）</span>
+      </div>
+      <button class="btn block" id="publishPost">确认发布到校园广场</button>
+      <div class="muted" style="font-size:11px">结案与知识沉淀由管理员整理验证，不依赖你点击「已解决」。</div>
+    </div>`;
+  $('publishPost').onclick=()=>{
+    toast('已发布，等待同学回答与管理员整理');
+    state.currentPostId='p1';
+    go('post');
+  };
+}
+
+function pageSquare(){
+  navBar('校园广场');
+  const lost = M.lostItems.filter(x=>x.status!=='已解决').slice(0,2);
+  $('content').innerHTML = `
+    <div class="pad" style="padding-bottom:6px">
+      <div class="card pad" style="background:linear-gradient(180deg,#F3FBF8,#fff)">
+        <div class="row space">
+          <div>
+            <div class="row"><b>失物招领</b><span class="chip" style="margin-left:6px">广场顶部模块</span></div>
+            <div class="muted" style="font-size:12px;margin-top:4px">结构化专项 · 非普通帖子</div>
+          </div>
+          <button class="btn sm" id="toLost">全部</button>
+        </div>
+        <div class="stack" style="margin-top:10px">
+          ${lost.map(i=>`
+            <div class="row space" style="padding:8px 0;border-top:1px dashed var(--line)">
+              <div>
+                <span class="chip ${i.kind==='丢失'?'red':'gray'}">${i.kind}</span>
+                <b style="margin-left:6px">${i.title}</b>
+                <div class="muted" style="font-size:11px;margin-top:4px">${i.place} · ${i.time}</div>
+              </div>
+              <span class="muted" style="font-size:11px">${i.status}</span>
+            </div>`).join('')}
+        </div>
+        <button class="btn ghost block" style="margin-top:8px" id="pubLost">发布失物</button>
+      </div>
+    </div>
+    <div class="row space" style="padding:4px 14px 8px">
+      <h3 class="section-title">最新动态</h3>
+      <span class="muted" style="font-size:12px">无分类切换</span>
+    </div>
+    ${M.posts.map(p=>`
+      <div class="post" data-post="${p.id}">
+        <div class="row space">
+          <div class="row"><div class="avatar" style="width:30px;height:30px;font-size:12px">${p.author[0]}</div><div>
+            <b style="font-size:13px">${p.author}</b>
+            <div class="muted" style="font-size:11px">${p.time} · ${p.campus}</div>
+          </div></div>
+          <div class="row" style="gap:4px">
+            ${p.fromAI?'<span class="chip">AI求助</span>':''}
+            ${p.resolved?'<span class="chip gray">已整理</span>':''}
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:14px;line-height:1.55">${p.content}</div>
+        <div class="muted" style="margin-top:8px;font-size:12px">♥ ${p.likes} · 评论 ${p.comments}</div>
+      </div>`).join('')}`;
+  $('toLost').onclick=()=>go('lost');
+  $('pubLost').onclick=()=>go('lost-publish');
+  $('content').onclick=(e)=>{ const p=e.target.closest('[data-post]'); if(p) openPost(p.dataset.post); };
+}
+function openPost(id){ state.currentPostId=id; go('post'); }
+function pagePost(){
+  const p = M.posts.find(x=>x.id===state.currentPostId) || M.posts[0];
+  const comments = M.postComments[p.id] || [{user:'同学C', text:'同问！', time:'刚刚'}];
+  navBar('动态详情', { back:true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="row space">
+        <div class="row"><div class="avatar">${p.author[0]}</div><div>
+          <b>${p.author}</b>
+          <div class="muted" style="font-size:11px">${p.time} · ${p.campus}</div>
+        </div></div>
+        ${p.fromAI?'<span class="chip">来自 AI 求助</span>':''}
+      </div>
+      <div style="font-size:15px;line-height:1.6">${p.content}</div>
+      ${p.resolved ? `<div class="card pad" style="background:var(--soft)">
+          <div class="row"><span class="chip">管理员已整理</span></div>
+          <div style="margin-top:8px;font-size:13px">${p.adminNote}</div>
+          ${p.picked?`<div class="source" style="margin-top:8px"><b>精选公开回答</b><div>${p.picked}</div></div>`:''}
+          <div class="muted" style="font-size:11px;margin-top:8px">结案由管理员完成，不依赖发帖人点击。</div>
+        </div>` : `<div class="banner">等待同学公开回答；有回答后会进入管理端「待整理求助」队列。</div>`}
+      <h3 class="section-title">评论 ${comments.length}</h3>
+      <div class="card pad">
+        ${comments.map(c=>`<div class="list-item"><b>${c.user}</b><div style="margin-top:4px">${c.text}</div><div class="muted" style="font-size:11px;margin-top:4px">${c.time}</div></div>`).join('')}
+      </div>
+      <button class="btn ghost block" onclick="toast('演示：已打开私信请求（次要路径）')">私信作者</button>
+    </div>`;
+}
+
+function pageLost(){
+  navBar('失物招领', { back:true, right:'发布', onRight:()=>go('lost-publish') });
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="row" style="gap:8px">
+        <span class="chip">全部</span><span class="chip gray">丢失</span><span class="chip gray">拾到</span><span class="chip gray">${M.me.campus}</span>
+      </div>
+      ${M.lostItems.map(i=>`
+        <div class="card pad">
+          <div class="row space">
+            <div class="row"><span class="chip ${i.kind==='丢失'?'red':'gray'}">${i.kind}</span><b style="margin-left:8px">${i.title}</b></div>
+            <span class="muted" style="font-size:12px">${i.status}</span>
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:8px">${i.place} · ${i.time} · ${i.campus}</div>
+          <div style="margin-top:8px;font-size:13px">${i.desc}</div>
+        </div>`).join('')}
+    </div>`;
+}
+function pageLostPublish(){
+  navBar('发布失物', { back:true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="row" style="gap:8px">
+        <button class="btn sm" id="k1">丢失物品</button>
+        <button class="btn ghost sm" id="k2">拾到物品</button>
+      </div>
+      <input class="input" id="lt" placeholder="物品名称，如黑色校园卡" value="黑色校园卡" />
+      <input class="input" id="lp" placeholder="地点" value="一食堂门口" />
+      <textarea id="ld" placeholder="补充特征；关键识别信息可隐藏">卡套有猫咪贴纸；学号已设为认领核验可见</textarea>
+      <div class="banner">关键特征默认可隐藏，仅用于认领核验。</div>
+      <button class="btn block" id="saveLost">发布</button>
+    </div>`;
+  $('saveLost').onclick=()=>{ toast('已发布到失物招领'); go('lost'); };
+}
+
+function pageActivities(){
+  navBar('校园活动', { back: state.stack.length>0 });
+  $('content').innerHTML = `
+    <div class="pad stack">
+      ${M.activities.map(a=>`
+        <div class="card pad" data-act="${a.id}" style="cursor:pointer">
+          <div class="row space">
+            <b>${a.title}</b>
+            ${a.promo?'<span class="chip orange">推广</span>':'<span class="chip gray">'+a.tag+'</span>'}
+          </div>
+          <div class="muted" style="font-size:12px;margin-top:8px">${a.org} · ${a.time}</div>
+          <div class="muted" style="font-size:12px">${a.place} · ${a.seats}</div>
+        </div>`).join('')}
+    </div>`;
+  $('content').onclick=(e)=>{ const a=e.target.closest('[data-act]'); if(a) openActivity(a.dataset.act); };
+}
+function openActivity(id){ state.currentActivityId=id; go('activity'); }
+function pageActivity(){
+  const a = M.activities.find(x=>x.id===state.currentActivityId) || M.activities[0];
+  navBar('活动详情', { back:true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="card pad" style="min-height:120px;background:linear-gradient(135deg,var(--soft),#fff)">
+        <div class="row" style="gap:8px">${a.promo?'<span class="chip orange">推广</span>':''}<span class="chip gray">${a.tag}</span></div>
+        <h2 style="margin:12px 0 6px;font-size:20px">${a.title}</h2>
+        <div class="muted" style="font-size:12px">活动信息由发布者提供；付费曝光不代表平台或学校认可</div>
+      </div>
+      <div class="card pad stack">
+        <div>主办：${a.org}</div>
+        <div>时间：${a.time}</div>
+        <div>地点：${a.place}</div>
+        <div>名额：${a.seats}</div>
+        <div class="muted" style="font-size:12px">收藏 ${a.fav} · 报名 ${a.joins}</div>
+      </div>
+      <button class="btn block" onclick="toast('演示：报名成功，将收到变更通知')">报名参加</button>
+      <button class="btn ghost block" onclick="toast('已收藏')">收藏</button>
+    </div>`;
+}
+
+function pageMarket(){
+  navBar('校园闲置', { back:true });
+  const kw = state.marketKeyword;
+  const list = M.usedGoods.filter(g => !kw || g.title.includes(kw.replace('四六级耳机','四六级')) || g.title.includes('耳机') || !kw);
+  const show = kw ? M.usedGoods.filter(g=>g.title.includes('耳机')) : M.usedGoods;
+  $('content').innerHTML = `
+    ${kw?`<div class="banner">${'已为你筛选本校区的' + kw + ' · 可清除条件'}</div>`:''}
+    <div class="pad" style="padding-bottom:8px">
+      <div class="row" style="gap:8px">
+        <input class="input" value="${kw||''}" placeholder="搜索闲置" id="mk" />
+        <button class="btn sm" id="mkGo">搜索</button>
+      </div>
+      <div class="row" style="gap:8px;margin-top:8px">
+        <span class="chip">${state.marketCampus}</span>
+        <span class="chip gray">个人闲置</span>
+        <span class="chip gray" id="toDigital" style="cursor:pointer">数字商品</span>
+      </div>
+    </div>
+    <div class="stack" style="padding:0 14px 18px">
+      ${show.map(g=>`
+        <div class="goods" data-g="${g.id}">
+          <div class="thumb">${g.img}</div>
+          <div>
+            <b style="font-size:13px">${g.title}</b>
+            <div class="muted" style="font-size:11px;margin-top:4px">${g.campus} · ${g.degree}</div>
+            <div class="muted" style="font-size:11px">${g.seller}</div>
+          </div>
+          <div class="price">¥${g.price}</div>
+        </div>`).join('')}
+    </div>`;
+  $('mkGo').onclick=()=>{ state.marketKeyword=$('mk').value.trim(); render(); };
+  $('toDigital').onclick=()=>go('digital');
+  $('content').onclick=(e)=>{ const g=e.target.closest('[data-g]'); if(g) openGoods(g.dataset.g); };
+}
+function openGoods(id){ state.currentGoodsId=id; go('goods'); }
+function pageGoods(){
+  const g = M.usedGoods.find(x=>x.id===state.currentGoodsId) || M.usedGoods[0];
+  navBar('商品详情', { back:true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="card pad" style="height:180px;display:grid;place-items:center;font-size:64px;background:var(--soft)">${g.img}</div>
+      <div class="row space"><h2 style="margin:0;font-size:22px" class="price">¥${g.price}</h2><span class="chip gray">${g.degree}</span></div>
+      <b style="font-size:16px">${g.title}</b>
+      <div class="muted" style="font-size:12px">${g.campus} · 建议当面交易</div>
+      <div class="banner">平台不担保用户身份和商品质量。普通用户身份未核验，请当面验货，谨慎提前转账。</div>
+      <div class="card pad row space">
+        <div class="row"><div class="avatar">${g.seller[0]}</div><div><b>${g.seller}</b><div class="muted" style="font-size:11px">${g.trust}</div></div></div>
+        <span class="chip gray">可信度提示</span>
+      </div>
+      <button class="btn block" id="chatSeller">通过平台私信联系</button>
+    </div>`;
+  $('chatSeller').onclick=()=>{ state.currentChatId='c1'; go('chat'); toast('已发起会话'); };
+}
+function pageDigital(){
+  navBar('数字商品', { back:true });
+  $('content').innerHTML = `
+    <div class="pad stack">
+      ${M.digitalGoods.map(d=>`
+        <div class="card pad">
+          <div class="row space"><b>${d.title}</b><span class="price">¥${d.price}</span></div>
+          <div class="muted" style="font-size:12px;margin-top:6px">${d.course} · 销量 ${d.sales}</div>
+          <div style="margin-top:8px;font-size:13px">${d.preview}</div>
+          <div class="muted" style="font-size:11px;margin-top:8px">${d.seller}</div>
+          <button class="btn sm" style="margin-top:10px" onclick="toast('演示：支付成功并自动交付')">购买并自动交付</button>
+        </div>`).join('')}
+      <div class="banner">卖家对权利来源负责；禁止未公开试题、盗版与作弊服务。</div>
+    </div>`;
+}
+
+function pageMessages(){
+  navBar('消息');
+  const chatActive = state.msgTab==='chat';
+  $('content').innerHTML = `
+    <div class="row" style="padding:10px 14px;gap:8px">
+      <button class="btn ${chatActive?'':'ghost'} sm" id="t1">私信</button>
+      <button class="btn ${!chatActive?'':'ghost'} sm" id="t2">通知</button>
+    </div>
+    <div class="pad" style="padding-top:0">
+      <div class="card pad">
+        ${chatActive ? M.chats.map(c=>`
+          <div class="list-item row space" style="cursor:pointer" data-c="${c.id}">
+            <div class="row"><div class="avatar">${c.name[0]}</div><div>
+              <b>${c.name}</b> ${c.request?'<span class="chip orange">请求</span>':''}
+              <div class="muted" style="font-size:12px;margin-top:3px">${c.last}</div>
+            </div></div>
+            <div style="text-align:right">
+              <div class="muted" style="font-size:11px">${c.time}</div>
+              ${c.unread?`<div class="chip red" style="margin-top:6px">${c.unread}</div>`:''}
+            </div>
+          </div>`).join('')
+        : M.notices.map(n=>`
+          <div class="list-item"><b style="font-size:13px">${n.title}</b><div class="muted" style="font-size:11px;margin-top:4px">${n.time}</div></div>`).join('')}
+      </div>
+    </div>`;
+  $('t1').onclick=()=>{ state.msgTab='chat'; render(); };
+  $('t2').onclick=()=>{ state.msgTab='notice'; render(); };
+  $('content').onclick=(e)=>{ const c=e.target.closest('[data-c]'); if(c){ state.currentChatId=c.dataset.c; go('chat'); } };
+}
+function pageChat(){
+  const c = M.chats.find(x=>x.id===state.currentChatId) || M.chats[0];
+  navBar(c.name, { back:true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="banner">私信仅限本校实例。首次联系可进入消息请求；不展示真实手机号。</div>
+      ${c.request ? `<div class="card pad"><b>陌生人消息请求</b><div class="muted" style="font-size:12px;margin-top:6px">对方想咨询商品，是否接受？</div>
+        <div class="row" style="margin-top:10px;gap:8px"><button class="btn sm" onclick="toast('已接受')">接受</button><button class="btn ghost sm" onclick="toast('已拒绝')">拒绝</button></div></div>`
+      : `<div class="msg-ai">你好，耳机还在吗？</div>
+           <div class="msg-user">在的，成色如图，今晚主楼当面看？</div>
+           <div class="msg-ai">${c.last}</div>`}
+    </div>
+    <div style="position:sticky;bottom:0;background:#fff;padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px">
+      <input class="input" placeholder="输入消息" />
+      <button class="btn sm" onclick="toast('演示：消息已发送')">发送</button>
+    </div>`;
+}
+
+function pageMe(){
+  navBar('我的');
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <div class="card pad row" style="gap:12px">
+        <div class="avatar lg">${M.me.avatar}</div>
+        <div class="grow">
+          <b style="font-size:18px">${M.me.name}</b>
+          <div class="muted" style="font-size:12px;margin-top:4px">${M.me.major}</div>
+          <div class="chip" style="margin-top:8px">${M.me.campus}</div>
+        </div>
+      </div>
+      <div class="banner">不展示学籍/学校官方认证。账号可信度基于平台行为，不等于身份保证。</div>
+      <div class="card pad">
+        <div class="list-item"><b>账号可信度</b><div class="muted" style="font-size:12px;margin-top:4px">${M.me.trust}</div></div>
+        <div class="list-item" onclick="go('square')" style="cursor:pointer"><b>我的发布</b></div>
+        <div class="list-item" onclick="go('market')" style="cursor:pointer"><b>我的闲置 / 订单</b></div>
+        <div class="list-item" onclick="go('activities')" style="cursor:pointer"><b>我的活动</b></div>
+        <div class="list-item" style="cursor:pointer" onclick="location.href='../school-admin/app.html'"><b>管理入口（演示）</b><div class="muted" style="font-size:11px;margin-top:4px">完整审核请用学校管理 Web</div></div>
+      </div>
+    </div>`;
+}
+
+function pageCompose(){
+  navBar('发动态', { back:true });
+  $('tabbar').style.display='none';
+  $('content').innerHTML = `
+    <div class="pad stack">
+      <textarea placeholder="分享校园见闻、求助或想法…不需要选择话题">${state.postDraft||''}</textarea>
+      <div class="row space"><span class="muted" style="font-size:12px">身份</span><span class="chip gray">公开昵称 / 可改匿名</span></div>
+      <button class="btn block" onclick="toast('已发布到广场'); go('square');">发布</button>
+    </div>`;
+}
+
+function render(){
+  renderTabbar();
+  const map = {
+    login: pageLogin,
+    home: pageHome,
+    ai: pageAI,
+    'ai-to-post': pageAiToPost,
+    square: pageSquare,
+    post: pagePost,
+    lost: pageLost,
+    'lost-publish': pageLostPublish,
+    activities: pageActivities,
+    activity: pageActivity,
+    market: pageMarket,
+    goods: pageGoods,
+    digital: pageDigital,
+    messages: pageMessages,
+    chat: pageChat,
+    me: pageMe,
+    compose: pageCompose,
+  };
+  (map[state.screen] || pageHome)();
+  if (!showTabbar() && !['home','square','messages','me'].includes(state.screen)) {
+    // keep tabbar hidden for stack pages already handled
+  }
+}
+
+renderFlows();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 校园通 · 平台控制台</title>
+<link rel="stylesheet" href="../assets/admin.css" />
+<script src="../assets/mock.js"></script>
+<style>
+  .sidebar { background: #101826; }
+  .brand .logo { background: linear-gradient(145deg, #3B82C4, #245B8C); }
+  :root { --theme: #245B8C; --theme-soft: #E8F1FA; }
+  .btn { background: #245B8C; }
+  .btn.ghost { color: #245B8C; border-color: #C5D8EB; }
+  .chip { background: #E8F1FA; color: #245B8C; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">控</div>
+      <div>
+        <b>平台控制台</b>
+        <span>总部 · 实例与版本</span>
+      </div>
+    </div>
+    <div class="nav-group">控制面</div>
+    <button class="nav-item active" data-page="schools">学校实例</button>
+    <button class="nav-item" data-page="create">开通学校</button>
+    <button class="nav-item" data-page="release">版本与运行</button>
+    <div class="side-foot">
+      <div>默认不可查看学校业务正文<br/>（帖子 / 私信 / 订单等）</div>
+      <div style="margin-top:10px" class="links">
+        <a href="../school-admin/app.html" style="color:#9ec3e6;border-color:rgba(255,255,255,.12);background:transparent">学校后台示例</a>
+        <a href="../index.html" style="color:#9ec3e6;border-color:rgba(255,255,255,.12);background:transparent">总入口</a>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">学校实例</h1>
+        <div class="meta">控制面 · 开通 / 停用 / 版本 / 运行状态</div>
+      </div>
+      <div class="row">
+        <span class="chip blue">平台总部权限</span>
+        <button class="btn sm" onclick="go('create')">开通学校实例</button>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const M = window.CAMPUS_MOCK;
+const state = { page: 'schools', created: null };
+const titles = { schools: '学校实例', create: '开通学校实例', release: '版本与运行状态' };
+function el(id){ return document.getElementById(id); }
+function toast(t){
+  var node = el('toast'); node.textContent = t; node.classList.add('show');
+  clearTimeout(window.__t); window.__t = setTimeout(function(){ node.classList.remove('show'); }, 1600);
+}
+function go(page){
+  state.page = page;
+  document.querySelectorAll('.nav-item').forEach(function(b){ b.classList.toggle('active', b.dataset.page === page); });
+  el('pageTitle').textContent = titles[page] || '学校实例';
+  render();
+}
+function statusChip(s){
+  if (s === '运行中') return 'ok';
+  if (s === '灰度中') return 'orange';
+  if (s === '已停用') return 'red';
+  return 'gray';
+}
+function pageSchools(){
+  var schools = M.schools.slice();
+  if (state.created) schools = [state.created].concat(schools);
+  el('content').innerHTML =
+    '<div class="banner info">平台控制台只管理实例与系统能力。学校业务内容（帖子、私信、订单、知识正文）默认不可查看；技术支持进入学校后台需临时授权与审计（概念说明）。</div>' +
+    '<div class="grid stats" style="margin-top:14px">' +
+      '<div class="card pad stat"><span>学校实例</span><b>' + schools.length + '</b><span>首期演示 3 校 + 新建</span></div>' +
+      '<div class="card pad stat"><span>运行中</span><b>' + schools.filter(function(s){ return s.status === '运行中'; }).length + '</b><span>独立 brand / 数据</span></div>' +
+      '<div class="card pad stat"><span>灰度中</span><b>' + schools.filter(function(s){ return s.status === '灰度中'; }).length + '</b><span>版本策略可分校</span></div>' +
+      '<div class="card pad stat"><span>统一代码</span><b>1</b><span>套小程序 + Web</span></div>' +
+    '</div>' +
+    '<div class="card" style="margin-top:14px"><div class="table-wrap"><table>' +
+    '<thead><tr><th>学校</th><th>实例 ID</th><th>状态</th><th>版本</th><th>用户量</th><th>入口形态</th><th></th></tr></thead><tbody>' +
+    schools.map(function(s){
+      return '<tr><td><b>' + s.name + '</b></td><td class="muted">' + s.id + '</td><td><span class="chip ' + statusChip(s.status) + '">' + s.status + '</span></td><td>' + s.version + '</td><td>' + s.users + '</td><td>' + s.entry + '</td>' +
+        '<td class="row"><button class="btn ghost sm" onclick="toast(\'演示：仅显示运行指标，不打开业务正文\')">运行摘要</button>' +
+        (s.id === 'sch_xupt' ? '<a class="btn sm" href="../school-admin/app.html">进入学校后台（授权演示）</a>' : '') +
+        '</td></tr>';
+    }).join('') +
+    '</tbody></table></div></div>' +
+    '<div class="card pad" style="margin-top:14px"><b>入口模型说明</b>' +
+    '<div class="muted" style="margin-top:8px;line-height:1.6;font-size:13px">一套用户小程序代码，通过太阳码 / 公众号菜单 / 分享参数 / 邀请码区分学校入口；进门后锁定本校，前台无切换学校。管理端与控制台分权：前者管本校业务，后者管实例与版本。</div></div>';
+}
+function pageCreate(){
+  el('content').innerHTML =
+    '<div class="banner">开通后生成独立学校实例：独立品牌、用户、知识库、社区、交易与后台边界。不复制分叉代码。</div>' +
+    '<div class="split" style="margin-top:14px">' +
+      '<div class="card pad stack">' +
+        '<b>基本信息</b>' +
+        '<label class="field">学校名称<input id="cName" placeholder="例如：临江师范学院" value="临江师范学院" /></label>' +
+        '<label class="field">实例短码<input id="cCode" value="sch_linjiang" /></label>' +
+        '<label class="field">默认主题色<input id="cTheme" value="#1F6B5A" /></label>' +
+        '<label class="field">校区（逗号分隔）<input id="cCampus" value="主校区, 新校区" /></label>' +
+        '<label class="field">入口形态<select id="cEntry"><option>太阳码专属</option><option>公众号菜单</option><option>邀请码开通</option><option>分享卡片 scene</option></select></label>' +
+        '<label class="field">初始版本<select id="cVer"><option>v1.0.3</option><option>v1.1.0-rc</option></select></label>' +
+        '<label class="field">配额备注<textarea id="cNote">AI 日调用额度默认；对象存储独立前缀；向量集合独立。</textarea></label>' +
+        '<button class="btn" id="doCreate">创建学校实例</button>' +
+      '</div>' +
+      '<div class="card pad stack">' +
+        '<b>开通清单（概念）</b>' +
+        '<div class="list-item">1. 分配 school_id 与品牌配置</div>' +
+        '<div class="list-item">2. 初始化数据边界 / 缓存命名空间 / 向量集合</div>' +
+        '<div class="list-item">3. 生成入口参数（太阳码或邀请码）</div>' +
+        '<div class="list-item">4. 授权校园代理人账号（不默认给平台业务正文权限）</div>' +
+        '<div class="list-item">5. 选择发布版本或进入灰度</div>' +
+        '<div class="banner info">用户端打开后只看到本校；不会出现全国学校列表。</div>' +
+      '</div>' +
+    '</div>';
+  el('doCreate').onclick = function(){
+    state.created = {
+      id: el('cCode').value || 'sch_new',
+      name: el('cName').value || '新学校',
+      status: '灰度中',
+      version: el('cVer').value,
+      users: '0',
+      entry: el('cEntry').value
+    };
+    toast('已创建实例（演示）');
+    go('schools');
+  };
+}
+function pageRelease(){
+  el('content').innerHTML =
+    '<div class="banner info">通用功能一次开发，可按灰度策略发布到各学校实例。此页为概念级状态，不做完整运维大盘。</div>' +
+    '<div class="grid two" style="margin-top:14px">' +
+      '<div class="card pad stack">' +
+        '<b>当前发布通道</b>' +
+        '<div class="list-item row space"><span>稳定版 v1.0.3</span><span class="chip ok">2 校</span></div>' +
+        '<div class="list-item row space"><span>候选版 v1.1.0-rc</span><span class="chip orange">1 校灰度</span></div>' +
+        '<div class="list-item row space"><span>小程序基础库策略</span><span class="chip gray">统一</span></div>' +
+        '<button class="btn ghost" onclick="toast(\'演示：已记录灰度扩量申请\')">扩大灰度到南岭学院</button>' +
+      '</div>' +
+      '<div class="card pad stack">' +
+        '<b>运行健康（示意）</b>' +
+        '<div class="list-item row space"><span>西安邮电大学</span><span class="chip ok">正常</span></div>' +
+        '<div class="list-item row space"><span>南岭学院</span><span class="chip ok">正常</span></div>' +
+        '<div class="list-item row space"><span>湾区理工</span><span class="chip orange">灰度观察</span></div>' +
+        '<div class="muted" style="font-size:12px">指标仅实例级：错误率、AI 配额、发布版本。不含帖子内容预览。</div>' +
+      '</div>' +
+    '</div>';
+}
+function render(){
+  var map = { schools: pageSchools, create: pageCreate, release: pageRelease };
+  (map[state.page] || pageSchools)();
+}
+document.querySelectorAll('.nav-item').forEach(function(btn){
+  btn.onclick = function(){ go(btn.dataset.page); };
+});
+render();
+</script>
+</body>
+</html>

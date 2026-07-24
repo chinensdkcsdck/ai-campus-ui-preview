@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>西安邮电大学 · 学校管理后台</title>
+<link rel="stylesheet" href="../assets/admin.css" />
+<script src="../assets/mock.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo" id="logoText">东</div>
+      <div>
+        <b id="schoolName">西安邮电大学</b>
+        <span>学校管理后台 · 仅本校</span>
+      </div>
+    </div>
+    <div class="nav-group">运营闭环</div>
+    <button class="nav-item active" data-page="dashboard">工作台</button>
+    <button class="nav-item" data-page="queue">待整理求助</button>
+    <button class="nav-item" data-page="knowledge">候选知识审核</button>
+    <button class="nav-item" data-page="moderation">内容与举报</button>
+    <div class="nav-group">本校配置</div>
+    <button class="nav-item" data-page="campus">校区内容共享</button>
+    <div class="side-foot">
+      <div id="adminMeta">王敏 · 知识维护</div>
+      <div style="margin-top:6px">不可跨校浏览业务数据</div>
+      <div style="margin-top:10px" class="links">
+        <a href="../mini/app.html" style="color:#9fd7c6;border-color:rgba(255,255,255,.12);background:transparent">用户端对照</a>
+        <a href="../index.html" style="color:#9fd7c6;border-color:rgba(255,255,255,.12);background:transparent">总入口</a>
+      </div>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">工作台</h1>
+        <div class="meta">演示实例 sch_xupt · 非学校官方平台</div>
+      </div>
+      <div class="row">
+        <span class="chip">本学校实例</span>
+        <button class="btn ghost sm" onclick="location.href='../platform-console/app.html'">平台控制台（总部）</button>
+      </div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const M = window.CAMPUS_MOCK;
+const state = { page: 'dashboard', currentHelpId: 'p1', filter: 'all' };
+const titles = {
+  dashboard: '工作台', queue: '待整理求助', detail: '整理求助',
+  knowledge: '候选知识审核', moderation: '内容与举报', campus: '校区内容共享'
+};
+function el(id){ return document.getElementById(id); }
+function toast(t){
+  const node = el('toast'); node.textContent = t; node.classList.add('show');
+  clearTimeout(window.__t); window.__t = setTimeout(function(){ node.classList.remove('show'); }, 1600);
+}
+function go(page, opts){
+  opts = opts || {};
+  state.page = page;
+  if (opts.helpId) state.currentHelpId = opts.helpId;
+  document.querySelectorAll('.nav-item').forEach(function(b){
+    var on = (page === 'queue' || page === 'detail') ? b.dataset.page === 'queue' : b.dataset.page === page;
+    b.classList.toggle('active', on);
+  });
+  el('pageTitle').textContent = titles[page] || '工作台';
+  render();
+}
+function statusChip(s){
+  if (s === '待整理' || s === '待审核' || s === '待处理') return 'orange';
+  if (s === '已整理' || s === '已入库' || s === '已隐藏') return 'ok';
+  if (s === '处理中' || s === '待补充') return 'blue';
+  return 'gray';
+}
+function pageDashboard(){
+  var pending = M.helpQueue.filter(function(x){ return x.status === '待整理'; }).length;
+  var know = (M.knowledgeCandidates || []).filter(function(x){ return x.status === '待审核'; }).length;
+  var reports = (M.reports || []).filter(function(x){ return x.status === '待处理'; }).length;
+  el('content').innerHTML =
+    '<div class="banner info">你正在管理 <b>' + M.school.name + '</b> 实例。界面不会出现其他学校业务数据；平台控制台仅总部使用。</div>' +
+    '<div class="grid stats" style="margin-top:14px">' +
+      '<div class="card pad stat"><span>待整理求助</span><b>' + pending + '</b><span>优先 AI 转帖 / 有回答</span></div>' +
+      '<div class="card pad stat"><span>候选知识待审</span><b>' + know + '</b><span>入库前人工核验</span></div>' +
+      '<div class="card pad stat"><span>待处理举报</span><b>' + reports + '</b><span>内容治理</span></div>' +
+      '<div class="card pad stat"><span>校区数</span><b>' + M.school.campuses.length + '</b><span>' + M.school.campuses.join(' / ') + '</span></div>' +
+    '</div>' +
+    '<div class="grid two" style="margin-top:14px">' +
+      '<div class="card pad"><div class="row space"><b>今日优先队列</b><button class="btn sm" onclick="go(\'queue\')">进入待整理</button></div>' +
+      '<div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>求助</th><th>回复</th><th>热度</th><th>状态</th></tr></thead><tbody>' +
+      M.helpQueue.map(function(h){
+        return '<tr class="clickable" onclick="go(\'detail\',{helpId:\'' + h.id + '\'})"><td><b>' + h.title + '</b><div class="muted" style="font-size:12px;margin-top:4px">' + (h.fromAI ? 'AI 转帖 · ' : '') + h.updated + '</div></td><td>' + h.replies + '</td><td>' + h.heat + '</td><td><span class="chip ' + statusChip(h.status) + '">' + h.status + '</span></td></tr>';
+      }).join('') +
+      '</tbody></table></div></div>' +
+      '<div class="card pad stack"><b>演示故事线</b>' +
+      '<div class="banner">主闭环：用户 AI 无答案发帖 → 同学公开回答 → 本页整理验证 → 用户端展示「管理员已整理」→ 候选知识审核。</div>' +
+      '<button class="btn" onclick="go(\'detail\',{helpId:\'p1\'})">整理「重修报名截止时间」</button>' +
+      '<button class="btn ghost" onclick="go(\'knowledge\')">去候选知识审核</button>' +
+      '<a class="btn ghost" href="../mini/app.html" style="text-align:center">打开用户端对照已整理帖 p3</a>' +
+      '</div></div>';
+}
+function pageQueue(){
+  var list = state.filter === 'pending' ? M.helpQueue.filter(function(x){ return x.status === '待整理'; })
+    : state.filter === 'done' ? M.helpQueue.filter(function(x){ return x.status === '已整理'; })
+    : M.helpQueue;
+  el('content').innerHTML =
+    '<div class="banner info">队列由管理员驱动结案，不依赖发帖人点「已解决」。优先：AI 转帖、已有公开回答、互动较高。</div>' +
+    '<div class="filters" style="margin-top:12px">' +
+      '<button class="btn ' + (state.filter === 'all' ? '' : 'ghost') + ' sm" data-f="all">全部</button>' +
+      '<button class="btn ' + (state.filter === 'pending' ? '' : 'ghost') + ' sm" data-f="pending">待整理</button>' +
+      '<button class="btn ' + (state.filter === 'done' ? '' : 'ghost') + ' sm" data-f="done">已整理</button>' +
+    '</div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>标题</th><th>来源</th><th>公开回答</th><th>热度</th><th>更新</th><th>状态</th><th></th></tr></thead><tbody>' +
+    list.map(function(h){
+      return '<tr><td><b>' + h.title + '</b></td><td>' + (h.fromAI ? '<span class="chip">AI 求助</span>' : '<span class="chip gray">广场发帖</span>') + '</td><td>' + h.replies + '</td><td>' + h.heat + '</td><td class="muted">' + h.updated + '</td><td><span class="chip ' + statusChip(h.status) + '">' + h.status + '</span></td><td><button class="btn sm" onclick="go(\'detail\',{helpId:\'' + h.id + '\'})">' + (h.status === '已整理' ? '查看' : '整理') + '</button></td></tr>';
+    }).join('') +
+    '</tbody></table></div></div>';
+  el('content').querySelectorAll('[data-f]').forEach(function(b){
+    b.onclick = function(){ state.filter = b.dataset.f; pageQueue(); };
+  });
+}
+function pageDetail(){
+  var h = M.helpQueue.find(function(x){ return x.id === state.currentHelpId; }) || M.helpQueue[0];
+  var post = M.posts.find(function(x){ return x.id === h.id; }) || M.posts[0];
+  var comments = M.postComments[h.id] || [{ user: '同学', text: '同问', time: '刚刚' }];
+  var done = h.status === '已整理';
+  el('content').innerHTML =
+    '<div class="row space" style="margin-bottom:12px"><button class="btn ghost sm" onclick="go(\'queue\')">← 返回队列</button><span class="chip ' + statusChip(h.status) + '">' + h.status + '</span></div>' +
+    '<div class="split"><div class="stack">' +
+      '<div class="card pad"><div class="row space"><div><b style="font-size:16px">' + h.title + '</b><div class="muted" style="font-size:12px;margin-top:6px">来源帖 ' + post.id + ' · ' + post.campus + ' · ' + post.time + '</div></div>' + (post.fromAI ? '<span class="chip">AI 无答案转帖</span>' : '') + '</div>' +
+      '<div style="margin-top:12px;line-height:1.6">' + post.content + '</div></div>' +
+      '<div class="card pad"><b>公开回答（仅可沉淀公开内容）</b><div class="muted" style="font-size:12px;margin-top:4px">私信原文不得自动进入知识库</div>' +
+      comments.map(function(c){
+        return '<div class="list-item"><div class="row space"><b>' + c.user + '</b><label class="row" style="font-size:12px;color:var(--muted)"><input type="checkbox" ' + (done && c.text.indexOf('18') >= 0 ? 'checked' : '') + ' style="width:auto" /> 精选</label></div><div style="margin-top:6px">' + c.text + '</div><div class="muted" style="font-size:11px;margin-top:4px">' + c.time + '</div></div>';
+      }).join('') +
+      '</div></div>' +
+      '<div class="card pad stack"><b>整理验证表单</b>' +
+      '<label class="field">标准问法<input value="' + h.title + '" /></label>' +
+      '<label class="field">标准答案<textarea id="ans">' + (done && post.picked ? post.picked : ((comments[0] && comments[0].text) || '')) + '</textarea></label>' +
+      '<label class="field">适用范围<select><option>全校</option><option selected>主校区</option><option>南校区</option><option>深圳校区</option></select></label>' +
+      '<label class="field">来源类型<select><option>校园经验</option><option>官方资料</option><option>社区讨论</option></select></label>' +
+      '<label class="field">有效期至<input type="date" value="2026-09-01" /></label>' +
+      '<label class="field">核验说明<textarea>对照多条一致回复；若涉及官方通知需补链接。</textarea></label>' +
+      '<div class="banner">提交后：1) 原帖标记「管理员已整理」；2) 可选生成候选知识进入审核池。</div>' +
+      '<div class="row" style="flex-wrap:wrap"><button class="btn" id="markDone">标记已整理并生成候选知识</button><button class="btn ghost" onclick="toast(\'已标记暂不入库\')">暂不入库</button></div>' +
+      '<div class="muted" style="font-size:12px">整理人：' + ((M.adminUser && M.adminUser.name) || '王敏') + ' · 操作会写审计日志（演示）</div>' +
+      '</div></div>';
+  el('markDone').onclick = function(){
+    h.status = '已整理';
+    h.updated = '刚刚';
+    post.resolved = true;
+    post.adminNote = '管理员已整理：' + (el('ans').value || '已核验公开回答');
+    post.picked = el('ans').value;
+    if (M.knowledgeCandidates) {
+      M.knowledgeCandidates.unshift({
+        id: 'k_new', title: h.title, sourcePost: h.id, status: '待审核', scope: '主校区',
+        type: '校园经验', draftAnswer: el('ans').value, validUntil: '2026-09-01',
+        reviewer: (M.adminUser && M.adminUser.name) || '王敏'
+      });
+    }
+    toast('已整理：用户端将展示管理员已整理');
+    go('knowledge');
+  };
+}
+function pageKnowledge(){
+  var list = M.knowledgeCandidates || [];
+  el('content').innerHTML =
+    '<div class="banner info">社区内容先审核后入库。热门不等于真实；官方资料与校园经验需区分标签。</div>' +
+    '<div class="card" style="margin-top:12px"><div class="table-wrap"><table><thead><tr><th>标题</th><th>类型</th><th>范围</th><th>有效期</th><th>状态</th><th>操作</th></tr></thead><tbody>' +
+    list.map(function(k){
+      return '<tr><td><b>' + k.title + '</b><div class="muted" style="font-size:12px;margin-top:4px;max-width:360px">' + k.draftAnswer + '</div></td><td><span class="chip ' + (k.type === '官方资料' ? '' : 'gray') + '">' + k.type + '</span></td><td>' + k.scope + '</td><td>' + k.validUntil + '</td><td><span class="chip ' + statusChip(k.status) + '">' + k.status + '</span></td><td class="row">' +
+        (k.status !== '已入库'
+          ? '<button class="btn sm" onclick="approveK(\'' + k.id + '\')">通过入库</button><button class="btn ghost sm" onclick="toast(\'已驳回并要求补充\')">驳回</button>'
+          : '<span class="muted">—</span>') +
+        '</td></tr>';
+    }).join('') +
+    '</tbody></table></div></div>';
+}
+function approveK(id){
+  var k = (M.knowledgeCandidates || []).find(function(x){ return x.id === id; });
+  if (k) { k.status = '已入库'; toast('已入库本校知识库'); pageKnowledge(); }
+}
+function pageModeration(){
+  var list = M.reports || [];
+  el('content').innerHTML =
+    '<div class="banner">内容治理仅限本校实例。可执行通过、限流、隐藏、删除、警告、禁言（演示为状态切换）。</div>' +
+    '<div class="card" style="margin-top:12px"><div class="table-wrap"><table><thead><tr><th>对象</th><th>原因</th><th>时间</th><th>状态</th><th>操作</th></tr></thead><tbody>' +
+    list.map(function(r){
+      return '<tr><td><b>' + r.target + '</b></td><td>' + r.reason + '</td><td class="muted">' + r.time + '</td><td><span class="chip ' + statusChip(r.status) + '">' + r.status + '</span></td><td class="row">' +
+        '<button class="btn sm" onclick="toast(\'已隐藏内容并记录审计\')">隐藏</button>' +
+        '<button class="btn ghost sm" onclick="toast(\'已警告用户\')">警告</button>' +
+        '<button class="btn danger sm" onclick="toast(\'演示：禁言 7 天\')">禁言</button></td></tr>';
+    }).join('') +
+    '</tbody></table></div></div>';
+}
+function pageCampus(){
+  var conf = M.campusShare || { groups: [], note: '' };
+  el('content').innerHTML =
+    '<div class="banner info">只需配置：某校区是否与其他校区默认共享内容。共享仅发生在同一学校实例内，不得跨校。</div>' +
+    '<div class="grid two" style="margin-top:12px"><div class="card pad stack"><b>当前共享组</b>' +
+    conf.groups.map(function(g){
+      return '<div class="list-item"><div class="row space"><b>' + g.name + '</b><span class="chip ' + (g.mode === '共享' ? '' : 'gray') + '">' + g.mode + '</span></div><div class="muted" style="margin-top:6px;font-size:13px">' + g.campuses.join('、') + '</div></div>';
+    }).join('') +
+    '<div class="muted" style="font-size:12px">' + conf.note + '</div></div>' +
+    '<div class="card pad stack"><b>修改配置（演示）</b>' +
+    '<label class="field">共享组名称<input value="主校共享组" /></label>' +
+    '<label class="field">包含校区<div class="row" style="flex-wrap:wrap;margin-top:4px">' +
+    M.school.campuses.map(function(c){
+      return '<label class="row" style="font-size:13px;color:var(--ink)"><input type="checkbox" ' + (c !== '深圳校区' ? 'checked' : '') + ' style="width:auto" /> ' + c + '</label>';
+    }).join('') +
+    '</div></label>' +
+    '<label class="field">默认模式<select><option>共享</option><option>独立</option></select></label>' +
+    '<div class="banner">修改后对新查询生效；记录操作人、时间、原配置与新配置。不改变内容所属校区。</div>' +
+    '<button class="btn" onclick="toast(\'已保存校区共享配置（演示）\')">保存配置</button></div></div>';
+}
+function render(){
+  var map = { dashboard: pageDashboard, queue: pageQueue, detail: pageDetail, knowledge: pageKnowledge, moderation: pageModeration, campus: pageCampus };
+  (map[state.page] || pageDashboard)();
+}
+el('logoText').textContent = M.school.logoText;
+el('schoolName').textContent = M.school.name;
+el('adminMeta').textContent = ((M.adminUser && M.adminUser.name) || '王敏') + ' · ' + ((M.adminUser && M.adminUser.role) || '知识维护');
+document.querySelectorAll('.nav-item').forEach(function(btn){
+  btn.onclick = function(){ go(btn.dataset.page); };
+});
+render();
+</script>
+</body>
+</html>
