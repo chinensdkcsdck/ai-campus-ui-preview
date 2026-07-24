@@ -474,6 +474,7 @@ const state = {
   digitalBuyerTab: 'shop',
   digitalSort: 'new',
   marketSort: 'new',
+  marketCategory: '全部',
   payOrderId: '',
   searchQ: '',
   campusPicked: false,
@@ -1098,33 +1099,78 @@ function pageAiToPost(){
 function pageSquare(){
   navBar('校园广场');
   const lost = M.lostItems.filter(x=>x.status!=='已解决').slice(0,2);
+  const goods = (M.usedGoods || []).filter(g => !g.status || g.status === '在售').slice(0,2);
+  const dig = (M.digitalGoods || []).filter(d => !d.status || d.status === '在售').slice(0,2);
   $('content').innerHTML = `
     <div class="pad" style="padding-bottom:6px">
-      <div class="card pad" style="background:linear-gradient(180deg,#F3FBF8,#fff)">
+      <div class="row" style="gap:10px;align-items:stretch">
+        <div class="card pad grow" style="background:linear-gradient(180deg,#F3FBF8,#fff);min-width:0;flex:1">
+          <div class="row space" style="gap:6px">
+            <div style="min-width:0">
+              <b style="font-size:14px">失物招领</b>
+              <div class="muted" style="font-size:11px;margin-top:3px">专项模块</div>
+            </div>
+            <button class="btn sm" id="toLost">全部</button>
+          </div>
+          <div class="stack" style="margin-top:8px;gap:6px">
+            ${lost.map(i=>`
+              <div style="padding-top:6px;border-top:1px dashed var(--line)">
+                <div class="row" style="gap:4px;flex-wrap:wrap">
+                  <span class="chip ${i.kind==='丢失'?'red':'gray'}" style="font-size:10px">${i.kind}</span>
+                  <b style="font-size:12px;line-height:1.3">${i.title}</b>
+                </div>
+                <div class="muted" style="font-size:10px;margin-top:3px">${i.place}</div>
+              </div>`).join('') || '<div class="muted" style="font-size:12px">暂无</div>'}
+          </div>
+        </div>
+        <div class="card pad grow" style="background:linear-gradient(180deg,#FFF8F1,#fff);min-width:0;flex:1">
+          <div class="row space" style="gap:6px">
+            <div style="min-width:0">
+              <b style="font-size:14px">二手交易</b>
+              <div class="muted" style="font-size:11px;margin-top:3px">闲置 · 学习资料</div>
+            </div>
+            <button class="btn sm" id="toMarket">进入</button>
+          </div>
+          <div class="stack" style="margin-top:8px;gap:6px">
+            ${goods.map(g=>`
+              <div class="row space" style="padding-top:6px;border-top:1px dashed var(--line);gap:6px;cursor:pointer" data-sg="${g.id}">
+                <div style="min-width:0">
+                  <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.img} ${g.title}</div>
+                  <div class="muted" style="font-size:10px;margin-top:2px">${g.category || '闲置'}</div>
+                </div>
+                <span class="price" style="font-size:12px;flex-shrink:0">¥${g.price}</span>
+              </div>`).join('') || '<div class="muted" style="font-size:12px">暂无</div>'}
+          </div>
+          <button class="btn ghost block" style="margin-top:8px;font-size:12px" id="toStudyFromSquare">学习资料</button>
+        </div>
+      </div>
+      <div class="card pad" style="margin-top:10px">
         <div class="row space">
           <div>
-            <div class="row"><b>失物招领</b><span class="chip" style="margin-left:6px">广场顶部模块</span></div>
-            <div class="muted" style="font-size:12px;margin-top:4px">结构化专项 · 非普通帖子</div>
+            <b style="font-size:13px">热门学习资料</b>
+            <div class="muted" style="font-size:11px;margin-top:3px">笔记 / 题集 · 风险自担</div>
           </div>
-          <button class="btn sm" id="toLost">全部</button>
+          <button class="btn ghost sm" id="toStudyMore">更多</button>
         </div>
-        <div class="stack" style="margin-top:10px">
-          ${lost.map(i=>`
-            <div class="row space" style="padding:8px 0;border-top:1px dashed var(--line)">
-              <div>
-                <span class="chip ${i.kind==='丢失'?'red':'gray'}">${i.kind}</span>
-                <b style="margin-left:6px">${i.title}</b>
-                <div class="muted" style="font-size:11px;margin-top:4px">${i.place} · ${i.time}</div>
+        <div class="stack" style="margin-top:8px">
+          ${dig.map(d=>`
+            <div class="row space" style="padding:8px 0;border-top:1px dashed var(--line);cursor:pointer;gap:8px" data-sd="${d.id}">
+              <div style="min-width:0">
+                <b style="font-size:13px">${d.cover || '📄'} ${d.title}</b>
+                <div class="muted" style="font-size:11px;margin-top:3px">${d.course} · ${d.seller}</div>
               </div>
-              <span class="muted" style="font-size:11px">${i.status}</span>
+              <span class="price" style="flex-shrink:0">¥${d.price}</span>
             </div>`).join('')}
         </div>
-        <button class="btn ghost block" style="margin-top:8px" id="pubLost">发布失物</button>
       </div>
     </div>
     <div class="row space" style="padding:4px 14px 8px">
       <h3 class="section-title">最新动态</h3>
-      <div class="row" style="gap:6px;flex-wrap:wrap"><span class="chip">最新</span><span class="chip gray" style="cursor:pointer" onclick="toast('已按热度排序（演示）')">热度</span><span class="chip gray" style="cursor:pointer" onclick="go('digital')">学习资料</span><span class="chip gray" style="cursor:pointer" onclick="go('search')">搜索</span></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <span class="chip">最新</span>
+        <span class="chip gray" style="cursor:pointer" onclick="toast('已按热度排序（演示）')">热度</span>
+        <span class="chip gray" style="cursor:pointer" onclick="go('search')">搜索</span>
+      </div>
     </div>
     ${M.posts.map(p=>`
       <div class="post" data-post="${p.id}">
@@ -1142,7 +1188,11 @@ function pageSquare(){
         <div class="muted" style="margin-top:8px;font-size:12px">♥ ${p.likes} · 评论 ${p.comments}</div>
       </div>`).join('')}`;
   $('toLost').onclick=()=>go('lost');
-  $('pubLost').onclick=()=>go('lost-publish');
+  $('toMarket').onclick=()=>{ state.marketCategory='全部'; go('market'); };
+  $('toStudyFromSquare').onclick=()=>{ state.marketCategory='学习资料'; go('market'); };
+  $('toStudyMore').onclick=()=>{ state.marketCategory='学习资料'; go('market'); };
+  $('content').querySelectorAll('[data-sg]').forEach(el => el.onclick = () => { state.currentGoodsId = el.dataset.sg; go('goods'); });
+  $('content').querySelectorAll('[data-sd]').forEach(el => el.onclick = () => openDigital(el.dataset.sd));
   $('content').onclick=(e)=>{ const p=e.target.closest('[data-post]'); if(p) openPost(p.dataset.post); };
 }
 function openPost(id){ state.currentPostId=id; go('post'); }
@@ -1277,48 +1327,128 @@ function pageActivity(){
 }
 
 function pageMarket(){
-  navBar('校园市场', { back:true });
-  const kw = state.marketKeyword;
+  navBar('二手交易', { back:true });
+  const kw = (state.marketKeyword || '').trim();
   const sort = state.marketSort || 'new';
-  let show = kw ? M.usedGoods.filter(g => g.title.includes('耳机') || g.title.includes(kw)) : M.usedGoods.slice();
+  const cat = state.marketCategory || '全部';
+  const cats = ['全部', '数码', '教材', '日用', '学习资料'];
+
+  // 学习资料分类：展示数字资料列表
+  if (cat === '学习资料') {
+    let dig = (M.digitalGoods || []).filter(d => !d.status || d.status === '在售');
+    if (kw) dig = dig.filter(d => d.title.includes(kw) || (d.course||'').includes(kw) || (d.seller||'').includes(kw));
+    if (sort === 'hot') dig = dig.slice().sort((a,b)=>(b.sales||0)-(a.sales||0));
+    else dig = dig.slice();
+    $('content').innerHTML = `
+      <div class="pad" style="padding-bottom:8px">
+        <div class="row" style="gap:8px">
+          <input class="input" value="${kw}" placeholder="搜资料 / 课程" id="mk" />
+          <button class="btn sm" id="mkGo">搜索</button>
+        </div>
+        <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;overflow:auto">
+          ${cats.map(c => `<span class="chip ${cat===c?'':'gray'}" data-cat="${c}" style="cursor:pointer">${c}</span>`).join('')}
+        </div>
+        <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">
+          <span class="chip ${sort==='new'?'':'gray'}" data-msort="new" style="cursor:pointer">最新</span>
+          <span class="chip ${sort==='hot'?'':'gray'}" data-msort="hot" style="cursor:pointer">热度</span>
+        </div>
+        <div class="banner" style="margin-top:10px">学习资料由发布者上传，平台不做质量/权利担保。只在站内付款，风险自担。</div>
+      </div>
+      <div class="stack" style="padding:0 14px 18px">
+        ${dig.map(d => `
+          <div class="card pad dig-card" data-d="${d.id}" style="cursor:pointer">
+            <div class="row space" style="align-items:flex-start;gap:10px">
+              <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(145deg,#1F8A6F,#0F5C4A);color:#fff;display:grid;place-items:center;font-size:18px;flex-shrink:0">${d.cover || '📄'}</div>
+              <div class="grow" style="min-width:0">
+                <div class="row space"><b style="font-size:14px">${d.title}</b><span class="price">¥${d.price}</span></div>
+                <div class="muted" style="font-size:12px;margin-top:4px">${d.course}${d.year ? ' · ' + d.year : ''} · 销量 ${d.sales||0}</div>
+                <div style="margin-top:6px;font-size:12px;line-height:1.45">${d.preview || ''}</div>
+                <div class="row space" style="margin-top:8px">
+                  <span class="chip gray">${d.seller}</span>
+                  <span class="muted" style="font-size:11px">${d.version || ''}</span>
+                </div>
+              </div>
+            </div>
+          </div>`).join('') || '<div class="muted">暂无学习资料</div>'}
+        <button class="btn ghost block" id="openFullDigital">进入完整学习资料商店</button>
+      </div>`;
+    $('mkGo').onclick=()=>{ state.marketKeyword=$('mk').value.trim(); pageMarket(); };
+    $('content').querySelectorAll('[data-cat]').forEach(c => c.onclick = () => { state.marketCategory = c.dataset.cat; pageMarket(); });
+    $('content').querySelectorAll('[data-msort]').forEach(c => c.onclick = () => { state.marketSort = c.dataset.msort; pageMarket(); });
+    $('content').onclick = (e) => { const d = e.target.closest('[data-d]'); if (d) openDigital(d.dataset.d); };
+    const ofd = $('openFullDigital'); if (ofd) ofd.onclick = () => { state.digitalBuyerTab='shop'; go('digital'); };
+    return;
+  }
+
+  let show = (M.usedGoods || []).slice();
+  if (cat !== '全部') show = show.filter(g => (g.category || '') === cat);
+  if (kw) show = show.filter(g => g.title.includes(kw) || (g.category||'').includes(kw) || (g.seller||'').includes(kw));
+  // 兼容旧搜索演示：耳机关键词
+  if (kw && !show.length) show = (M.usedGoods || []).filter(g => g.title.includes('耳机') || g.title.includes(kw));
   if (sort === 'hot') show = show.slice().sort((a,b) => (b.price||0) - (a.price||0));
+
+  const digPreview = (M.digitalGoods || []).filter(d => !d.status || d.status === '在售').slice(0,3);
+
   $('content').innerHTML = `
     ${kw?`<div class="banner">已为你筛选：${kw}</div>`:''}
     <div class="pad" style="padding-bottom:8px">
       <div class="row" style="gap:8px">
-        <input class="input" value="${kw||''}" placeholder="搜索闲置 / 教材" id="mk" />
+        <input class="input" value="${kw}" placeholder="搜索闲置 / 教材" id="mk" />
         <button class="btn sm" id="mkGo">搜索</button>
       </div>
-      <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
-        <span class="chip">个人闲置</span>
-        <span class="chip gray" id="toDigital" style="cursor:pointer">学习资料</span>
-        <span class="chip gray">${state.marketCampus}</span>
+      <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap;overflow:auto">
+        ${cats.map(c => `<span class="chip ${cat===c?'':'gray'}" data-cat="${c}" style="cursor:pointer">${c}</span>`).join('')}
       </div>
       <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">
         <span class="chip ${sort==='new'?'':'gray'}" data-msort="new" style="cursor:pointer">最新</span>
         <span class="chip ${sort==='hot'?'':'gray'}" data-msort="hot" style="cursor:pointer">热度</span>
-        <span class="chip gray" id="toDigital2" style="cursor:pointer">学习资料</span>
+        <span class="chip gray">${state.marketCampus || M.me.campus}</span>
       </div>
-      <div class="banner" style="margin-top:10px">反诈：闲置只撮合信息，平台不经手资金、不担保成色与身份。务必当面验货，切勿提前转账或扫码付款。笔记题集请走「学习资料」。</div>
+      <div class="banner" style="margin-top:10px">反诈：闲置只撮合信息，不经手资金。当面验货再付款，切勿提前转账。</div>
     </div>
-    <div class="stack" style="padding:0 14px 18px">
+    <div class="stack" style="padding:0 14px 10px">
       ${show.map(g=>`
         <div class="goods" data-g="${g.id}">
           <div class="thumb">${g.img}</div>
           <div>
             <b style="font-size:13px">${g.title}</b>
-            <div class="muted" style="font-size:11px;margin-top:4px">${g.campus} · ${g.degree}</div>
-            <div class="muted" style="font-size:11px">${g.seller}</div>
+            <div class="muted" style="font-size:11px;margin-top:4px">${g.campus} · ${g.degree} · ${g.category || ''}</div>
+            <div class="muted" style="font-size:11px">${g.seller}${g.status && g.status!=='在售' ? ' · ' + g.status : ''}</div>
           </div>
           <div class="price">¥${g.price}</div>
-        </div>`).join('')}
-    </div>`;
-  $('mkGo').onclick=()=>{ state.marketKeyword=$('mk').value.trim(); render(); };
-  const goDig = () => { state.digitalBuyerTab='shop'; go('digital'); };
-  $('toDigital').onclick = goDig;
-  $('toDigital2').onclick = goDig;
+        </div>`).join('') || '<div class="muted">该分类暂无闲置</div>'}
+    </div>
+    ${cat === '全部' ? `
+    <div class="pad" style="padding-top:0">
+      <div class="card pad">
+        <div class="row space">
+          <div>
+            <b>学习资料</b>
+            <div class="muted" style="font-size:11px;margin-top:3px">笔记题集 · 点分类「学习资料」查看全部</div>
+          </div>
+          <button class="btn sm" id="catStudy">查看</button>
+        </div>
+        <div class="stack" style="margin-top:8px">
+          ${digPreview.map(d=>`
+            <div class="row space" style="padding:8px 0;border-top:1px dashed var(--line);cursor:pointer" data-d="${d.id}">
+              <div style="min-width:0">
+                <b style="font-size:13px">${d.cover || '📄'} ${d.title}</b>
+                <div class="muted" style="font-size:11px;margin-top:3px">${d.course} · 销量 ${d.sales||0}</div>
+              </div>
+              <span class="price">¥${d.price}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+  `;
+  $('mkGo').onclick=()=>{ state.marketKeyword=$('mk').value.trim(); pageMarket(); };
+  $('content').querySelectorAll('[data-cat]').forEach(c => c.onclick = () => { state.marketCategory = c.dataset.cat; pageMarket(); });
   $('content').querySelectorAll('[data-msort]').forEach(c => c.onclick = () => { state.marketSort = c.dataset.msort; pageMarket(); });
-  $('content').onclick=(e)=>{ const g=e.target.closest('[data-g]'); if(g) openGoods(g.dataset.g); };
+  const cs = $('catStudy'); if (cs) cs.onclick = () => { state.marketCategory = '学习资料'; pageMarket(); };
+  $('content').onclick=(e)=>{
+    const g = e.target.closest('[data-g]'); if (g) { openGoods(g.dataset.g); return; }
+    const d = e.target.closest('[data-d]'); if (d) openDigital(d.dataset.d);
+  };
 }
 function openGoods(id){ state.currentGoodsId=id; go('goods'); }
 function pageGoods(){
