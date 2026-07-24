@@ -78,7 +78,7 @@ window.CAMPUS_MOCK = {
     digital: {
       q: '高数复习资料有吗',
       type: 'route_digital',
-      routeLabel: '已为你筛选数字商品 · 高等数学'
+      routeLabel: '已为你筛选学习资料 · 高等数学'
     },
     activity: {
       q: '最近有什么社团纳新',
